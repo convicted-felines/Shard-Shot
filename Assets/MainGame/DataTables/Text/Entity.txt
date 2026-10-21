@@ -1,0 +1,5 @@
+#	实体表
+#	Id		Name	AssetName
+#	int		string	string
+#	实体编号	策划备注	名称	资源名称
+	1000	战斗小猫	BattleCatty	BattleCatty

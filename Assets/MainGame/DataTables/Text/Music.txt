@@ -1,0 +1,7 @@
+#	音乐配置表
+#	Id		Name	AssetName
+#	int		string	string
+#	音乐编号	策划备注	名称	资源名称
+	1		music_menu	music_menu
+	2		music_background	music_background
+	3		music_about	music_about

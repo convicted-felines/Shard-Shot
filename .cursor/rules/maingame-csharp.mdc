@@ -1,0 +1,48 @@
+---
+description: MainGame C# 脚本编码约定
+globs: Assets/MainGame/Scripts/**/*.cs
+alwaysApply: false
+---
+
+# MainGame C# 约定
+
+## 结构
+
+- 流程玩法 → `Procedure/CustomProcedure/`，继承 `ProcedureFlowBase`
+- UI → 继承 `UGuiForm`，与 Prefab 同名
+- 实体 → 继承 `Entity` + `EntityData` 子类
+- 扩展方法 → `{Module}Extension.cs`
+- 工具类 → `Utility/{域}/`（见 `Utility/README.md`）
+
+## 访问入口
+
+```csharp
+GameEntry.UI / .Entity / .Procedure / .DataTable / .Control / .Platform / .ProgressObserver
+```
+
+## Procedure 模板
+
+```csharp
+protected override void OnEnter(ProcedureOwner owner) {
+    base.OnEnter(owner);
+    GameEntry.ProgressObserver?.OnProcedureEnter(typeof(ProcedureXxx));
+    OpenUIFromData(owner);
+    // 可选：打开本流程默认 UI，参考 ProcedureMenu + UIFormEnum.主界面
+}
+protected override void OnLeave(ProcedureOwner owner, bool isShutdown) {
+    // 可选：关闭本流程打开的 UI
+    GameEntry.ProgressObserver?.OnProcedureLeave(typeof(ProcedureXxx));
+    base.OnLeave(owner, isShutdown);
+}
+```
+
+## 常量与组
+
+- 实体组：`Constant.EntityGroup.*`
+- 加载优先级：`Constant.AssetPriority.*`
+- 输入动作：`GameEntry.Control.Controls.Gameplay.*`
+
+## 禁止
+
+- 在 Runtime 脚本中使用 `UnityEditor`（Editor 代码放 `Scripts/Editor/`）
+- 新建 `Invector` 等非 `MainGame` 命名空间

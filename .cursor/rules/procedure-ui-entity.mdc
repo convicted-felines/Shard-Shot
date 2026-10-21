@@ -1,0 +1,42 @@
+---
+description: Procedure、UI、Entity 新增与联动规则
+globs: Assets/MainGame/Scripts/Procedure/**/*.cs,Assets/MainGame/Scripts/UI/**/*.cs,Assets/MainGame/Scripts/Entity/**/*.cs
+alwaysApply: false
+---
+
+# Procedure / UI / Entity 联动
+
+## 新增 Procedure（4 处联动）
+
+1. `CustomProcedure/ProcedureXxx.cs` — 继承 `ProcedureFlowBase`
+2. `ProcedureBase.cs` — `ProcedureEnum` + `ChangeToTargetProcedure` case
+3. Unity Inspector — Procedure Component → Available Procedures
+4. 若用新场景 — `Scene.txt` + `.unity` 文件 + Build Settings
+
+跳转 API：`StartGame(enum, SceneEnum)` / `BackToMenu()` / `BackToMenu_andOpenUI(...)`
+
+## 新增 UI（4 处联动 + 可选打包）
+
+1. `DataTables/Text/UIForm.txt` — 新行
+2. `DataTables/B` 生成 — `UIFormEnum`
+3. `UI/UIForms/{AssetName}.prefab`
+4. `Scripts/UI/{AssetName}.cs` : `UGuiForm`（类名 = Prefab 名 = AssetName）
+5. （打包/热更时）`Game Framework/Resource Tools/Resource Editor` 分配到资源组并 Save — **禁止手改** `ResourceCollection.xml`
+
+打开：`GameEntry.UI.OpenUIForm(UIFormEnum.Xxx, userData)`
+
+参考：`ProcedureMenu` 打开/关闭 `UIFormEnum.主界面`（`MenuForm`）。
+
+## 新增 Entity（4 处联动）
+
+1. `DataTables/Text/Entity.txt` — 新行
+2. `DataTables/B` 生成 — `EntityEnum`
+3. `Entities/{AssetName}.prefab` + `Entity` 子类
+4. `EntityExtension.cs` — `ShowXxx` 方法
+
+EntityData 用 ReferencePool；TypeId = DREntity.Id。
+
+## 流程传 UI
+
+`m_OpenUINextProcedure.Add(UIFormEnum.Xxx)` 后 `StartGame(...)` → 目标流程 `OnEnter` 调 `OpenUIFromData`。
+流程自带默认 UI 时：在 `OnEnter` 直接 `OpenUIForm`，`OnLeave` 对称 `Close`。

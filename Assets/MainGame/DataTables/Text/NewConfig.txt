@@ -1,0 +1,7 @@
+#	配置表
+#	Id		Name
+#	int		string
+#	编号	策划备注	名称
+	1		a
+	2		b
+	3		c

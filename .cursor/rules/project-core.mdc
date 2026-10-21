@@ -1,0 +1,32 @@
+---
+description: MainGame 项目核心边界与 AI 工作区约束
+alwaysApply: true
+---
+
+# MainGame 核心规则
+
+## 工作区
+
+- 业务代码只改 `Assets/MainGame/`
+- **禁止**修改 `Assets/UnityGameFramework/`
+- 读架构：`AGENTS.md`、`docs/ARCHITECTURE.md`
+- 新增功能：`docs/ADD_FEATURE.md` Checklist
+
+## 关键约束
+
+- 切场景必须：`ProcedureFlowBase.StartGame` → `ProcedureChangeScene`，禁止 `SceneManager.LoadScene`
+- 资源路径必须：`AssetUtility.*`，禁止硬编码 `Assets/MainGame/...`
+- UI 打开必须：`GameEntry.UI.OpenUIForm(UIFormEnum.*)` 或 `UIExtension`
+- 禁止手改 `Configs/ResourceCollection.xml`（由 Resource Editor Save 生成）
+- 配置表：改 txt/Excel → `DataTables/B.生成...`，禁止手改 `DR*.cs`
+- 新 Procedure：改 `ProcedureEnum` + `ChangeToTargetProcedure` switch + Inspector Available Procedures
+- 新 DataTable：加入 `ProcedurePreload.DataTableNames`
+- 命名空间：`MainGame`（Editor 用 `MainGame.Editor`）
+
+## GameEntry 扩展
+
+新组件 → `GameEntry.Custom.cs` 注册，不改 `GameEntry.Builtin.cs`。
+
+## 最小 diff
+
+只改任务相关文件；不重构无关代码；匹配现有命名与注释风格。

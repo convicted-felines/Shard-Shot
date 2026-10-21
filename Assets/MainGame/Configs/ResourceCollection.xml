@@ -1,0 +1,36 @@
+﻿<?xml version="1.0" encoding="UTF-8"?>
+<UnityGameFramework>
+  <ResourceCollection>
+    <Resources>
+      <Resource Name="anim" LoadType="3" Packed="True" />
+      <Resource Name="data" LoadType="3" Packed="True" />
+      <Resource Name="entity" LoadType="3" Packed="True" />
+      <Resource Name="fonts" LoadType="3" Packed="True" />
+      <Resource Name="model" LoadType="3" Packed="True" />
+      <Resource Name="scenes" LoadType="3" Packed="True" />
+      <Resource Name="sound" LoadType="3" Packed="True" />
+      <Resource Name="ui" LoadType="3" Packed="True" />
+    </Resources>
+    <Assets>
+      <Asset Guid="0776cc02a3fcfc445a85d2dd810694c1" ResourceName="data" />
+      <Asset Guid="379ba96c2e9c61d42acdfae098000beb" ResourceName="ui" />
+      <Asset Guid="426ad19fa0eed02439db7fcc8def0dab" ResourceName="data" />
+      <Asset Guid="4cd5c405ae2134141aa2969fa27b3814" ResourceName="scenes" />
+      <Asset Guid="530f7814334a55d41ad6c5f59e028979" ResourceName="data" />
+      <Asset Guid="5aedbece1517bad48bfa32d524cb94ad" ResourceName="ui" />
+      <Asset Guid="663b2554c97674c4a99e659642c9badf" ResourceName="entity" />
+      <Asset Guid="70eb4b2330a67b846966ccd46cac4db7" ResourceName="data" />
+      <Asset Guid="72384d391559e194caaf91822e7b2f7e" ResourceName="data" />
+      <Asset Guid="878bc70719b9c554485c0cef39e4ba8b" ResourceName="scenes" />
+      <Asset Guid="9845517358ddc5246bbc00516c74acfb" ResourceName="ui" />
+      <Asset Guid="a459e33ae26545e28e216fe34c3964e7" ResourceName="ui" />
+      <Asset Guid="b30719f439898294d8b05e4cf7ef7d0e" ResourceName="data" />
+      <Asset Guid="c763c222ebbbc6943913e6caefe2d0aa" ResourceName="ui" />
+      <Asset Guid="e0c8f50b9d20a884c95a3bfa41fdee22" ResourceName="ui" />
+      <Asset Guid="f195296dc55fc914e84491643c6cec59" ResourceName="fonts" />
+      <Asset Guid="f36bd914387622a4ea83ecfd99edfcfc" ResourceName="data" />
+      <Asset Guid="f84a7534bcb8b804b95eea9bca9e0932" ResourceName="ui" />
+      <Asset Guid="ff774d4d0f3ec174380d2fb1a6e8d99a" ResourceName="ui" />
+    </Assets>
+  </ResourceCollection>
+</UnityGameFramework>

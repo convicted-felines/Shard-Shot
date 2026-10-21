@@ -1,0 +1,5 @@
+#	配置表
+#	Id		Name	ChineseSimplified	English	ChineseTraditional	Korean
+#	int		string	string	string	string	string
+#	编号	策划备注	名称	中文简体	英语	中文繁体	韩语		
+	100	UI翻译	UI翻译	UI翻译	UI翻译	UI翻译	UI翻译
