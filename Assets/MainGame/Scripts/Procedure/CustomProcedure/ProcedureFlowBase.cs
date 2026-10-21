@@ -110,7 +110,7 @@ namespace MainGame
 
         public void BackToMenu()
         {
-            StartGame(ProcedureEnum.菜单流程, SceneEnum.菜单场景);
+            StartGame(ProcedureEnum.菜单流程, SceneEnum.入口场景);
         }
 
         public void BackToMenu_andOpenUI(UIFormEnum[] ids)

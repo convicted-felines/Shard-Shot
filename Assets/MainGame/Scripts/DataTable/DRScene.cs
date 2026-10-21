@@ -105,9 +105,9 @@ namespace MainGame
         /// </summary>
         入口场景 = 1,
         /// <summary>
-        /// 菜单场景
+        /// 游戏场景
         /// </summary>
-        菜单场景 = 2,
+        游戏场景 = 2,
     }
 
 
