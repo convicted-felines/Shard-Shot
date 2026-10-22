@@ -13,6 +13,14 @@ namespace MainGame
             new List<UnityGameFramework.Runtime.Entity>(32);
 
         /// <summary>
+        /// 查找最近的存活敌对角色（不限距离）。
+        /// </summary>
+        public static bool TryFindNearestHostile(CharacterEntity self, out CharacterEntity target)
+        {
+            return TryFindNearestHostile(self, float.MaxValue, out target);
+        }
+
+        /// <summary>
         /// 在攻击距离内查找最近的存活敌对角色。
         /// </summary>
         public static bool TryFindNearestHostile(CharacterEntity self, float attackRange, out CharacterEntity target)

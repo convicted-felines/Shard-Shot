@@ -56,6 +56,7 @@ namespace MainGame
             m_CachedColliders = GetComponentsInChildren<Collider>(true);
             m_CachedAnimator = GetComponentInChildren<Animator>();
             CacheRenderers();
+            CharacterRigidbodyUtility.SyncRigidbodyToTransform(m_Rigidbody);
 
             Name = m_DRCharacter != null ? m_DRCharacter.Name : Utility.Text.Format("Character_{0}", Id);
         }

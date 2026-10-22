@@ -16,6 +16,7 @@ namespace MainGame
         private CharacterRangedAttackComponent m_RangedAttackComponent;
         private CharacterMeleeAttackComponent m_MeleeAttackComponent;
         private MonsterCombatComponent m_CombatComponent;
+        private MonsterMovementComponent m_MovementComponent;
 
         public override CharacterFaction Faction => CharacterFaction.Enemy;
 
@@ -27,10 +28,7 @@ namespace MainGame
 
             if (Rigidbody != null)
             {
-                Rigidbody.isKinematic = true;
-                Rigidbody.useGravity = false;
-                Rigidbody.velocity = Vector3.zero;
-                Rigidbody.angularVelocity = Vector3.zero;
+                CharacterRigidbodyUtility.SetupTopDownMovement(Rigidbody);
             }
 
             SetupDamageReceivers(this, this);
@@ -51,6 +49,7 @@ namespace MainGame
             m_RangedAttackComponent = null;
             m_MeleeAttackComponent = null;
             m_CombatComponent = null;
+            m_MovementComponent = null;
             ClearHealthState();
             base.OnHide(isShutdown, userData);
         }
@@ -58,6 +57,7 @@ namespace MainGame
         protected override void OnUpdate(float elapseSeconds, float realElapseSeconds)
         {
             base.OnUpdate(elapseSeconds, realElapseSeconds);
+            m_MovementComponent?.Tick(elapseSeconds);
             m_CombatComponent?.Tick(elapseSeconds);
         }
 
@@ -109,6 +109,14 @@ namespace MainGame
             }
 
             m_CombatComponent.Initialize(this, m_WeaponComponent, m_RangedAttackComponent, m_MeleeAttackComponent);
+
+            m_MovementComponent = GetComponent<MonsterMovementComponent>();
+            if (m_MovementComponent == null)
+            {
+                m_MovementComponent = gameObject.AddComponent<MonsterMovementComponent>();
+            }
+
+            m_MovementComponent.Initialize(this, m_CombatComponent, m_Animator);
         }
 
         private void EquipDefaultWeapon()
@@ -125,8 +133,7 @@ namespace MainGame
 
         private void FaceNearestHostileOrOrigin()
         {
-            if (CharacterConfig != null
-                && CharacterTargetingUtility.TryFindNearestHostile(this, CharacterConfig.AttackRange, out CharacterEntity target))
+            if (CharacterTargetingUtility.TryFindNearestHostile(this, out CharacterEntity target))
             {
                 FacePosition(target.CachedTransform.position);
                 return;

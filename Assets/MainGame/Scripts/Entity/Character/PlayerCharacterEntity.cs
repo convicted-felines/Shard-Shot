@@ -90,8 +90,7 @@ namespace MainGame
                 return;
             }
 
-            Rigidbody.constraints = RigidbodyConstraints.FreezeRotation;
-            Rigidbody.interpolation = RigidbodyInterpolation.Interpolate;
+            CharacterRigidbodyUtility.SetupTopDownMovement(Rigidbody);
         }
 
         protected override void OnHide(bool isShutdown, object userData)
@@ -256,13 +255,8 @@ namespace MainGame
                 moveDirection.Normalize();
             }
 
-            Rigidbody.angularVelocity = Vector3.zero;
-
             float moveSpeed = CharacterConfig.MoveSpeed;
-            Vector3 velocity = Rigidbody.velocity;
-            velocity.x = moveDirection.x * moveSpeed;
-            velocity.z = moveDirection.z * moveSpeed;
-            Rigidbody.velocity = velocity;
+            CharacterRigidbodyUtility.ApplyPlanarVelocity(Rigidbody, moveDirection * moveSpeed);
 
             UpdateAnimator(moveSpeed, elapseSeconds);
 
@@ -286,7 +280,7 @@ namespace MainGame
                 return;
             }
 
-            float horizontalSpeed = new Vector3(Rigidbody.velocity.x, 0f, Rigidbody.velocity.z).magnitude;
+            float horizontalSpeed = CharacterRigidbodyUtility.GetPlanarSpeed(Rigidbody);
             float targetSpeed = moveSpeed > 0.01f ? Mathf.Clamp01(horizontalSpeed / moveSpeed) : 0f;
             m_AnimatorSpeed = Mathf.Lerp(m_AnimatorSpeed, targetSpeed, elapseSeconds * 10f);
             m_Animator.SetFloat(SpeedParamHash, m_AnimatorSpeed);
