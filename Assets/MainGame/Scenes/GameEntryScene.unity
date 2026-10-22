@@ -675,7 +675,7 @@ PrefabInstance:
     - target: {fileID: 5260654791754745306, guid: 419c7e1a3a27841debb0a95b47d38bd3,
         type: 3}
       propertyPath: m_EntityGroups.Array.size
-      value: 4
+      value: 5
       objectReference: {fileID: 0}
     - target: {fileID: 5260654791754745306, guid: 419c7e1a3a27841debb0a95b47d38bd3,
         type: 3}
@@ -701,6 +701,11 @@ PrefabInstance:
         type: 3}
       propertyPath: m_EntityGroups.Array.data[3].m_Name
       value: System
+      objectReference: {fileID: 0}
+    - target: {fileID: 5260654791754745306, guid: 419c7e1a3a27841debb0a95b47d38bd3,
+        type: 3}
+      propertyPath: m_EntityGroups.Array.data[4].m_Name
+      value: RagDoll
       objectReference: {fileID: 0}
     - target: {fileID: 5260654791754745306, guid: 419c7e1a3a27841debb0a95b47d38bd3,
         type: 3}
@@ -745,12 +750,12 @@ PrefabInstance:
     - target: {fileID: 5260654791754745306, guid: 419c7e1a3a27841debb0a95b47d38bd3,
         type: 3}
       propertyPath: m_EntityGroups.Array.data[4].m_InstanceCapacity
-      value: 50
+      value: 4
       objectReference: {fileID: 0}
     - target: {fileID: 5260654791754745306, guid: 419c7e1a3a27841debb0a95b47d38bd3,
         type: 3}
       propertyPath: m_EntityGroups.Array.data[4].m_InstancePriority
-      value: 1
+      value: 3
       objectReference: {fileID: 0}
     - target: {fileID: 5260654791754745306, guid: 419c7e1a3a27841debb0a95b47d38bd3,
         type: 3}
@@ -825,7 +830,7 @@ PrefabInstance:
     - target: {fileID: 5260654791754745306, guid: 419c7e1a3a27841debb0a95b47d38bd3,
         type: 3}
       propertyPath: m_EntityGroups.Array.data[4].m_InstanceExpireTime
-      value: 15
+      value: 20
       objectReference: {fileID: 0}
     - target: {fileID: 5260654791754745306, guid: 419c7e1a3a27841debb0a95b47d38bd3,
         type: 3}
@@ -875,7 +880,7 @@ PrefabInstance:
     - target: {fileID: 5260654791754745306, guid: 419c7e1a3a27841debb0a95b47d38bd3,
         type: 3}
       propertyPath: m_EntityGroups.Array.data[4].m_InstanceAutoReleaseInterval
-      value: 30
+      value: 60
       objectReference: {fileID: 0}
     - target: {fileID: 5260654791754745306, guid: 419c7e1a3a27841debb0a95b47d38bd3,
         type: 3}

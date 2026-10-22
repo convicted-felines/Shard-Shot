@@ -39,7 +39,7 @@ namespace MainGame
                 }
 
                 CharacterEntity character = ugfEntity.Logic as CharacterEntity;
-                if (character == null)
+                if (character == null || !CharacterFactionUtility.IsHostile(self.Faction, character.Faction))
                 {
                     continue;
                 }

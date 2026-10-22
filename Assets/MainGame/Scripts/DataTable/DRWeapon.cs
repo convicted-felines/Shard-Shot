@@ -199,7 +199,7 @@ namespace MainGame
         /// <summary>
         /// 
         /// </summary>
-        大刀 = 3,
+        骑士剑 = 3,
     }
 
 

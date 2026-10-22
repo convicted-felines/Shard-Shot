@@ -11,7 +11,7 @@ PrefabInstance:
     - target: {fileID: 1547066662441809552, guid: 1850c12044007374c8b9073052f0a828,
         type: 3}
       propertyPath: m_Name
-      value: "\u9A91\u58EB\u673A\u5668\u4EBA Variant"
+      value: "\u9A91\u58EB\u673A\u5668\u4EBARagdoll"
       objectReference: {fileID: 0}
     - target: {fileID: 1547066662441809552, guid: 1850c12044007374c8b9073052f0a828,
         type: 3}
@@ -561,8 +561,8 @@ CharacterJoint:
   m_EnableProjection: 0
   m_ProjectionDistance: 0.1
   m_ProjectionAngle: 180
-  m_BreakForce: Infinity
-  m_BreakTorque: Infinity
+  m_BreakForce: 20
+  m_BreakTorque: 20
   m_EnableCollision: 0
   m_EnablePreprocessing: 0
   m_MassScale: 1
@@ -663,8 +663,8 @@ CharacterJoint:
   m_EnableProjection: 0
   m_ProjectionDistance: 0.1
   m_ProjectionAngle: 180
-  m_BreakForce: Infinity
-  m_BreakTorque: Infinity
+  m_BreakForce: 20
+  m_BreakTorque: 20
   m_EnableCollision: 0
   m_EnablePreprocessing: 0
   m_MassScale: 1
@@ -765,8 +765,8 @@ CharacterJoint:
   m_EnableProjection: 0
   m_ProjectionDistance: 0.1
   m_ProjectionAngle: 180
-  m_BreakForce: Infinity
-  m_BreakTorque: Infinity
+  m_BreakForce: 20
+  m_BreakTorque: 20
   m_EnableCollision: 0
   m_EnablePreprocessing: 0
   m_MassScale: 1
@@ -969,8 +969,8 @@ CharacterJoint:
   m_EnableProjection: 0
   m_ProjectionDistance: 0.1
   m_ProjectionAngle: 180
-  m_BreakForce: Infinity
-  m_BreakTorque: Infinity
+  m_BreakForce: 20
+  m_BreakTorque: 20
   m_EnableCollision: 0
   m_EnablePreprocessing: 0
   m_MassScale: 1
@@ -1069,8 +1069,8 @@ CharacterJoint:
   m_EnableProjection: 0
   m_ProjectionDistance: 0.1
   m_ProjectionAngle: 180
-  m_BreakForce: Infinity
-  m_BreakTorque: Infinity
+  m_BreakForce: 20
+  m_BreakTorque: 20
   m_EnableCollision: 0
   m_EnablePreprocessing: 0
   m_MassScale: 1

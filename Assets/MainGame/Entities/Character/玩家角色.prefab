@@ -83,8 +83,14 @@ PrefabInstance:
     - targetCorrespondingSourceObject: {fileID: 919132149155446097, guid: 6836de3d369291043832cd011ae12520,
         type: 3}
       insertIndex: -1
-      addedObject: {fileID: 3694785021066973183}
+      addedObject: {fileID: 5145932631111012733}
   m_SourcePrefab: {fileID: 100100000, guid: 6836de3d369291043832cd011ae12520, type: 3}
+--- !u!1 &796885682875071009 stripped
+GameObject:
+  m_CorrespondingSourceObject: {fileID: -8343894014087287100, guid: 6836de3d369291043832cd011ae12520,
+    type: 3}
+  m_PrefabInstance: {fileID: 521172722387866853}
+  m_PrefabAsset: {fileID: 0}
 --- !u!1 &863277180333877684 stripped
 GameObject:
   m_CorrespondingSourceObject: {fileID: 919132149155446097, guid: 6836de3d369291043832cd011ae12520,
@@ -141,7 +147,7 @@ CapsuleCollider:
   m_Height: 2.2
   m_Direction: 1
   m_Center: {x: 0, y: 1.1, z: 0}
---- !u!114 &3694785021066973183
+--- !u!114 &5145932631111012733
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -150,10 +156,15 @@ MonoBehaviour:
   m_GameObject: {fileID: 863277180333877684}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 065f8077e155e4b4b9ce5d9e2e20c2a4, type: 3}
+  m_Script: {fileID: 11500000, guid: 4ebb49c61b401f94799356e3055509a3, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  m_RagBoneRoot: {fileID: 796885682875071009}
+  m_DetachLimbsOnDeath: 0
+  m_DeathRagdollHideDelay: 3
+  m_DeathScatterForce: 12
   m_WeaponSocket: {fileID: 2271861788608529594}
+  m_DefaultWeapon: 1
 --- !u!1 &2271861788608529594 stripped
 GameObject:
   m_CorrespondingSourceObject: {fileID: -7440837640338354081, guid: 6836de3d369291043832cd011ae12520,

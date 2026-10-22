@@ -32,7 +32,7 @@ namespace MainGame
             }
             else if (data.TypeId == (int)CharacterEnum.骑士机器人)
             {
-                logicType = typeof(TargetCharacterEntity);
+                logicType = typeof(MonsterCharacterEntity);
             }
             else
             {

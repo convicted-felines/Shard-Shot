@@ -80,7 +80,17 @@ PrefabInstance:
         type: 3}
       insertIndex: -1
       addedObject: {fileID: 8313030127347520530}
+    - targetCorrespondingSourceObject: {fileID: 919132149155446097, guid: 3b727a3386c29f948bf89db4481e7615,
+        type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 3773462245181825540}
   m_SourcePrefab: {fileID: 100100000, guid: 3b727a3386c29f948bf89db4481e7615, type: 3}
+--- !u!1 &73733979080661918 stripped
+GameObject:
+  m_CorrespondingSourceObject: {fileID: -7440837640338354081, guid: 3b727a3386c29f948bf89db4481e7615,
+    type: 3}
+  m_PrefabInstance: {fileID: 1853549276890418113}
+  m_PrefabAsset: {fileID: 0}
 --- !u!1 &1547066662441809552 stripped
 GameObject:
   m_CorrespondingSourceObject: {fileID: 919132149155446097, guid: 3b727a3386c29f948bf89db4481e7615,
@@ -137,3 +147,27 @@ Rigidbody:
   m_Interpolate: 0
   m_Constraints: 80
   m_CollisionDetection: 0
+--- !u!114 &3773462245181825540
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1547066662441809552}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 4ebb49c61b401f94799356e3055509a3, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  m_RagBoneRoot: {fileID: 1553083973459895557}
+  m_DetachLimbsOnDeath: 0
+  m_DeathRagdollHideDelay: 3
+  m_DeathScatterForce: 12
+  m_WeaponSocket: {fileID: 73733979080661918}
+  m_DefaultWeapon: 3
+--- !u!1 &1553083973459895557 stripped
+GameObject:
+  m_CorrespondingSourceObject: {fileID: -8343894014087287100, guid: 3b727a3386c29f948bf89db4481e7615,
+    type: 3}
+  m_PrefabInstance: {fileID: 1853549276890418113}
+  m_PrefabAsset: {fileID: 0}

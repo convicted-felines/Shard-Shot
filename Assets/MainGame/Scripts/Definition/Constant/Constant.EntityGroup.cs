@@ -13,6 +13,9 @@ namespace MainGame
             public const string WorldUI = "WorldUI";
             /// <summary>系统/菜单逻辑实体（ProgressObserver 等）。</summary>
             public const string System = "System";
+
+            /// <summary>死亡布偶（重型物理，极少并发）。</summary>
+            public const string RagDoll = "RagDoll";
         }
     }
 }
