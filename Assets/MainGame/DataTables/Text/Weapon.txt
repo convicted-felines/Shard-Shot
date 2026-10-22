@@ -1,0 +1,7 @@
+#	武器表
+#	Id		Name	AssetName	WeaponType	Damage
+#	int		string	string	string	float
+#	编号	策划备注	名称	资源名称	武器类型	伤害
+	1		加特林	加特林	远程	10
+	2		榴弹炮	榴弹炮	远程	10
+	3		大刀	大刀	近战	10

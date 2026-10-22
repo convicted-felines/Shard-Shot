@@ -7,14 +7,38 @@ namespace MainGame
     /// </summary>
     public class PlayerCharacterEntity : CharacterEntity
     {
+        [SerializeField]
+        private GameObject m_WeaponSocket;
+
         private static readonly int SpeedParamHash = Animator.StringToHash("Speed");
 
         private Animator m_Animator;
         private float m_AnimatorSpeed;
+        private CharacterWeaponComponent m_WeaponComponent;
+
+        public CharacterWeaponComponent WeaponComponent => m_WeaponComponent;
+
+        public WeaponEntity CurrentWeaponEntity => m_WeaponComponent?.CurrentWeaponEntity;
+
+        public int CurrentWeaponId => m_WeaponComponent != null ? m_WeaponComponent.CurrentWeaponId : 0;
+
+        public void EquipWeapon(WeaponEnum weaponEnum)
+        {
+            m_WeaponComponent?.EquipWeapon(weaponEnum);
+        }
 
         protected override void OnShow(object userData)
         {
             base.OnShow(userData);
+
+            m_WeaponComponent = GetComponent<CharacterWeaponComponent>();
+            if (m_WeaponComponent == null)
+            {
+                m_WeaponComponent = gameObject.AddComponent<CharacterWeaponComponent>();
+            }
+
+            Transform socket = m_WeaponSocket != null ? m_WeaponSocket.transform : null;
+            m_WeaponComponent.Initialize(this, socket);
 
             m_Animator = GetComponentInChildren<Animator>();
             m_AnimatorSpeed = 0f;
@@ -34,8 +58,14 @@ namespace MainGame
 
         protected override void OnHide(bool isShutdown, object userData)
         {
+            if (m_WeaponComponent != null)
+            {
+                m_WeaponComponent.ClearCurrentWeapon();
+            }
+
             m_Animator = null;
             m_AnimatorSpeed = 0f;
+            m_WeaponComponent = null;
             base.OnHide(isShutdown, userData);
         }
 

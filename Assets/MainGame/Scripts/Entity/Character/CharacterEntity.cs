@@ -9,6 +9,8 @@ namespace MainGame
     /// </summary>
     public class CharacterEntity : Entity
     {
+
+        
         private CharacterData m_CharacterData;
         private DRCharacter m_DRCharacter;
         private Rigidbody m_Rigidbody;
