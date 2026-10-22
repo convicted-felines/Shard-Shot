@@ -44,6 +44,7 @@ namespace MainGame
             Name = "TopDownFollowCamera";
             CachedTransform.rotation = m_FixedRotation;
             TryBindFollowTarget();
+            GameEntry.Sound.RefreshBuiltInAudioListener();
         }
 
         protected override void OnHide(bool isShutdown, object userData)
@@ -53,6 +54,7 @@ namespace MainGame
                 WorldUIGroupCanvas.ClearWorldCamera(m_Camera);
             }
 
+            GameEntry.Sound.RefreshBuiltInAudioListener();
             m_FollowEntityId = 0;
             m_FollowTarget = null;
             m_Camera = null;

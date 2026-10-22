@@ -15,6 +15,7 @@ namespace MainGame
         private Animator m_Animator;
         private float m_AnimatorSpeed;
         private CharacterWeaponComponent m_WeaponComponent;
+        private CharacterCombatComponent m_CombatComponent;
 
         public CharacterWeaponComponent WeaponComponent => m_WeaponComponent;
 
@@ -47,12 +48,22 @@ namespace MainGame
                 m_Animator.SetFloat(SpeedParamHash, 0f);
             }
 
+            m_CombatComponent = GetComponent<CharacterCombatComponent>();
+            if (m_CombatComponent == null)
+            {
+                m_CombatComponent = gameObject.AddComponent<CharacterCombatComponent>();
+            }
+
+            m_CombatComponent.Initialize(this, m_WeaponComponent, m_Animator);
+            EquipWeapon(WeaponEnum.加特林);
+
             if (Rigidbody == null)
             {
                 return;
             }
 
-            Rigidbody.constraints = RigidbodyConstraints.FreezeRotationX | RigidbodyConstraints.FreezeRotationZ;
+            // 锁定全部旋转，朝向仅由 MoveRotation 控制，避免碰撞时物理引擎施加 Y 轴角速度。
+            Rigidbody.constraints = RigidbodyConstraints.FreezeRotation;
             Rigidbody.interpolation = RigidbodyInterpolation.Interpolate;
         }
 
@@ -65,6 +76,7 @@ namespace MainGame
 
             m_Animator = null;
             m_AnimatorSpeed = 0f;
+            m_CombatComponent = null;
             m_WeaponComponent = null;
             base.OnHide(isShutdown, userData);
         }
@@ -73,6 +85,7 @@ namespace MainGame
         {
             base.OnUpdate(elapseSeconds, realElapseSeconds);
             UpdateMovement(elapseSeconds);
+            m_CombatComponent?.Tick(elapseSeconds);
         }
 
         private void UpdateMovement(float elapseSeconds)
@@ -89,6 +102,8 @@ namespace MainGame
                 moveDirection.Normalize();
             }
 
+            Rigidbody.angularVelocity = Vector3.zero;
+
             float moveSpeed = CharacterConfig.MoveSpeed;
             Vector3 velocity = Rigidbody.velocity;
             velocity.x = moveDirection.x * moveSpeed;
@@ -97,7 +112,7 @@ namespace MainGame
 
             UpdateAnimator(moveSpeed, elapseSeconds);
 
-            if (moveDirection.sqrMagnitude <= 0.001f)
+            if (moveDirection.sqrMagnitude <= 0.001f || IsCombatFacingLocked())
             {
                 return;
             }
@@ -121,6 +136,14 @@ namespace MainGame
             float targetSpeed = moveSpeed > 0.01f ? Mathf.Clamp01(horizontalSpeed / moveSpeed) : 0f;
             m_AnimatorSpeed = Mathf.Lerp(m_AnimatorSpeed, targetSpeed, elapseSeconds * 10f);
             m_Animator.SetFloat(SpeedParamHash, m_AnimatorSpeed);
+        }
+
+        /// <summary>
+        /// 仅在实际开火攻击中锁定移动转向；移动时由移动方向控制朝向。
+        /// </summary>
+        private bool IsCombatFacingLocked()
+        {
+            return m_CombatComponent != null && m_CombatComponent.IsAttacking;
         }
     }
 }

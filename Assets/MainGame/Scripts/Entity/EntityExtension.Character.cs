@@ -25,9 +25,19 @@ namespace MainGame
 
             data.AssetName = drCharacter.AssetName;
             data.EntityName = drCharacter.Name;
-            Type logicType = data.TypeId == (int)CharacterEnum.玩家角色
-                ? typeof(PlayerCharacterEntity)
-                : typeof(CharacterEntity);
+            Type logicType;
+            if (data.TypeId == (int)CharacterEnum.玩家角色)
+            {
+                logicType = typeof(PlayerCharacterEntity);
+            }
+            else if (data.TypeId == (int)CharacterEnum.骑士机器人)
+            {
+                logicType = typeof(TargetCharacterEntity);
+            }
+            else
+            {
+                logicType = typeof(CharacterEntity);
+            }
             entityComponent.ShowEntity(logicType, Constant.EntityGroup.Default,
                 AssetUtility.GetCharacterAsset(drCharacter.AssetName), Constant.AssetPriority.Other, data);
         }

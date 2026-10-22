@@ -226,5 +226,33 @@ namespace MainGame
             GameEntry.Setting.SetCloudSyncedFloat(Utility.Text.Format(Constant.Setting.SoundGroupVolume, soundGroupName), volume);
             GameEntry.Setting.Save();
         }
+
+        /// <summary>
+        /// 根据场景中其它 AudioListener 自动开关 Sound 组件内置 Listener。
+        /// 场景相机（实体）晚于场景加载生成时，需主动调用以避免重复 Listener 警告。
+        /// </summary>
+        public static void RefreshBuiltInAudioListener(this SoundComponent soundComponent)
+        {
+            AudioListener builtInListener = soundComponent.GetComponent<AudioListener>();
+            if (builtInListener == null)
+            {
+                return;
+            }
+
+            AudioListener[] listeners = UnityEngine.Object.FindObjectsOfType<AudioListener>();
+            int otherEnabledCount = 0;
+            for (int i = 0; i < listeners.Length; i++)
+            {
+                AudioListener listener = listeners[i];
+                if (listener == null || listener == builtInListener || !listener.enabled)
+                {
+                    continue;
+                }
+
+                otherEnabledCount++;
+            }
+
+            builtInListener.enabled = otherEnabledCount <= 0;
+        }
     }
 }

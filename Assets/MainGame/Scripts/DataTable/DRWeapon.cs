@@ -68,6 +68,60 @@ namespace MainGame
             private set;
         }
 
+        /// <summary>
+        /// 获取基础攻击速度。
+        /// </summary>
+        public float BaseAttackSpeed
+        {
+            get;
+            private set;
+        }
+
+        /// <summary>
+        /// 获取攻击速度。
+        /// </summary>
+        public float AttackSpeed
+        {
+            get;
+            private set;
+        }
+
+        /// <summary>
+        /// 获取攻击时机。
+        /// </summary>
+        public float AttackTiming
+        {
+            get;
+            private set;
+        }
+
+        /// <summary>
+        /// 获取子弹资源名称。
+        /// </summary>
+        public string BulletAssetName
+        {
+            get;
+            private set;
+        }
+
+        /// <summary>
+        /// 获取子弹速度。
+        /// </summary>
+        public float BulletSpeed
+        {
+            get;
+            private set;
+        }
+
+        /// <summary>
+        /// 获取伤害倒计时。
+        /// </summary>
+        public float DamageCountdown
+        {
+            get;
+            private set;
+        }
+
         public override bool ParseDataRow(string dataRowString, object userData)
         {
             string[] columnStrings = dataRowString.Split(DataTableExtension.DataSplitSeparators);
@@ -84,6 +138,12 @@ namespace MainGame
             AssetName = columnStrings[index++];
             WeaponType = columnStrings[index++];
             Damage = float.Parse(columnStrings[index++]);
+            BaseAttackSpeed = float.Parse(columnStrings[index++]);
+            AttackSpeed = float.Parse(columnStrings[index++]);
+            AttackTiming = float.Parse(columnStrings[index++]);
+            BulletAssetName = columnStrings[index++];
+            BulletSpeed = float.Parse(columnStrings[index++]);
+            DamageCountdown = float.Parse(columnStrings[index++]);
 
             GeneratePropertyArray();
             return true;
@@ -100,6 +160,12 @@ namespace MainGame
                     AssetName = binaryReader.ReadString();
                     WeaponType = binaryReader.ReadString();
                     Damage = binaryReader.ReadSingle();
+                    BaseAttackSpeed = binaryReader.ReadSingle();
+                    AttackSpeed = binaryReader.ReadSingle();
+                    AttackTiming = binaryReader.ReadSingle();
+                    BulletAssetName = binaryReader.ReadString();
+                    BulletSpeed = binaryReader.ReadSingle();
+                    DamageCountdown = binaryReader.ReadSingle();
                 }
             }
 

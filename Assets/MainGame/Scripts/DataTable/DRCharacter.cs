@@ -86,6 +86,15 @@ namespace MainGame
             private set;
         }
 
+        /// <summary>
+        /// 获取攻击距离。
+        /// </summary>
+        public float AttackRange
+        {
+            get;
+            private set;
+        }
+
         public override bool ParseDataRow(string dataRowString, object userData)
         {
             string[] columnStrings = dataRowString.Split(DataTableExtension.DataSplitSeparators);
@@ -104,6 +113,7 @@ namespace MainGame
             MoveSpeed = float.Parse(columnStrings[index++]);
             TurnSpeed = float.Parse(columnStrings[index++]);
             Health = float.Parse(columnStrings[index++]);
+            AttackRange = float.Parse(columnStrings[index++]);
 
             GeneratePropertyArray();
             return true;
@@ -122,6 +132,7 @@ namespace MainGame
                     MoveSpeed = binaryReader.ReadSingle();
                     TurnSpeed = binaryReader.ReadSingle();
                     Health = binaryReader.ReadSingle();
+                    AttackRange = binaryReader.ReadSingle();
                 }
             }
 
@@ -151,7 +162,7 @@ namespace MainGame
         /// <summary>
         /// 
         /// </summary>
-        地方机器人 = 2,
+        骑士机器人 = 2,
     }
 
 
