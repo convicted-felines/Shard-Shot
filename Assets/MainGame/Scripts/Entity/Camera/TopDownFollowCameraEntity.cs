@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using UnityEngine;
 using UnityGameFramework.Runtime;
 
@@ -8,6 +9,9 @@ namespace MainGame
     /// </summary>
     public class TopDownFollowCameraEntity : Entity
     {
+        private static readonly List<UnityGameFramework.Runtime.Entity> s_EntityBuffer =
+            new List<UnityGameFramework.Runtime.Entity>(8);
+
         [SerializeField]
         private Vector3 m_FollowOffset = new Vector3(0f, 12f, -8f);
 
@@ -21,6 +25,47 @@ namespace MainGame
         private Transform m_FollowTarget;
         private Camera m_Camera;
         private Quaternion m_FixedRotation;
+
+        /// <summary>
+        /// 切换跟随实体；布偶实体会优先跟随其 BoneRoot（RagBoneRoot）。
+        /// </summary>
+        public void SetFollowEntity(int entityId)
+        {
+            m_FollowEntityId = entityId;
+            m_FollowTarget = null;
+            TryBindFollowTarget();
+        }
+
+        /// <summary>
+        /// 查找当前已加载的俯视角跟随摄像机。
+        /// </summary>
+        public static bool TryGetActive(out TopDownFollowCameraEntity camera)
+        {
+            camera = null;
+            if (GameEntry.Entity == null)
+            {
+                return false;
+            }
+
+            s_EntityBuffer.Clear();
+            GameEntry.Entity.GetAllLoadedEntities(s_EntityBuffer);
+            for (int i = 0; i < s_EntityBuffer.Count; i++)
+            {
+                UnityGameFramework.Runtime.Entity ugfEntity = s_EntityBuffer[i];
+                if (ugfEntity == null)
+                {
+                    continue;
+                }
+
+                camera = ugfEntity.Logic as TopDownFollowCameraEntity;
+                if (camera != null)
+                {
+                    return true;
+                }
+            }
+
+            return false;
+        }
 
         protected override void OnShow(object userData)
         {
@@ -101,7 +146,20 @@ namespace MainGame
             }
 
             Entity followEntity = GameEntry.Entity.GetGameEntity(m_FollowEntityId);
-            m_FollowTarget = followEntity != null ? followEntity.CachedTransform : null;
+            if (followEntity == null)
+            {
+                m_FollowTarget = null;
+                return;
+            }
+
+            RagdollEntity ragdoll = followEntity as RagdollEntity;
+            if (ragdoll != null && ragdoll.BoneRoot != null)
+            {
+                m_FollowTarget = ragdoll.BoneRoot;
+                return;
+            }
+
+            m_FollowTarget = followEntity.CachedTransform;
         }
     }
 }

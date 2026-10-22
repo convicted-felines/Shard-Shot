@@ -10,7 +10,7 @@ namespace MainGame
     public sealed class CharacterWeaponComponent : MonoBehaviour
     {
         private CharacterEntity m_Owner;
-        private Transform m_WeaponSocket;
+        private CharacterPrefabConfig m_PrefabConfig;
         private int m_CurrentWeaponId;
         private int m_CurrentWeaponEntityId;
 
@@ -38,10 +38,10 @@ namespace MainGame
             }
         }
 
-        public void Initialize(CharacterEntity owner, Transform weaponSocket)
+        public void Initialize(CharacterEntity owner, CharacterPrefabConfig prefabConfig)
         {
             m_Owner = owner;
-            m_WeaponSocket = weaponSocket;
+            m_PrefabConfig = prefabConfig != null ? prefabConfig : owner?.PrefabConfig;
         }
 
         public void EquipWeapon(WeaponEnum weaponEnum)
@@ -75,7 +75,7 @@ namespace MainGame
                 return;
             }
 
-            if (m_WeaponSocket == null)
+            if (!TryGetOwnerWeaponAttachPath(out string attachPath))
             {
                 Log.Warning("CharacterWeaponComponent: weapon socket is missing.");
                 return;
@@ -83,7 +83,6 @@ namespace MainGame
 
             ClearCurrentWeapon();
 
-            string attachPath = TransformUtility.GetRelativeTransformPath(m_Owner.CachedTransform, m_WeaponSocket);
             WeaponData data = WeaponData.Create(
                 (WeaponEnum)weaponId,
                 m_Owner.Id,
@@ -107,6 +106,51 @@ namespace MainGame
             m_CurrentWeaponId = 0;
         }
 
+        /// <summary>击飞时将当前武器挂到布偶手部挂点（布偶预制体上的 CharacterPrefabConfig）。</summary>
+        public bool TryTransferWeaponToRagdoll(RagdollEntity ragdoll)
+        {
+            if (ragdoll?.PrefabConfig == null
+                || !ragdoll.PrefabConfig.TryGetWeaponAttachPath(ragdoll.CachedTransform, out string attachPath))
+            {
+                return false;
+            }
+
+            return TryAttachCurrentWeaponTo(ragdoll, attachPath);
+        }
+
+        /// <summary>起身时将武器从布偶挂点移回角色。</summary>
+        public bool TryTransferWeaponBackToCharacter()
+        {
+            if (!TryGetOwnerWeaponAttachPath(out string attachPath))
+            {
+                return false;
+            }
+
+            return TryAttachCurrentWeaponTo(m_Owner, attachPath);
+        }
+
+        private bool TryGetOwnerWeaponAttachPath(out string attachPath)
+        {
+            attachPath = null;
+            return m_Owner != null
+                && m_PrefabConfig != null
+                && m_PrefabConfig.TryGetWeaponAttachPath(m_Owner.CachedTransform, out attachPath);
+        }
+
+        private bool TryAttachCurrentWeaponTo(Entity host, string attachPath)
+        {
+            WeaponEntity weapon = CurrentWeaponEntity;
+            if (weapon == null || host == null || string.IsNullOrEmpty(attachPath))
+            {
+                return false;
+            }
+
+            GameEntry.Entity.DetachEntity(weapon);
+            weapon.Visible = true;
+            GameEntry.Entity.AttachEntity(weapon, host, attachPath);
+            return true;
+        }
+
         private bool IsCurrentWeaponAlive()
         {
             return m_CurrentWeaponEntityId != 0 && GameEntry.Entity.HasEntity(m_CurrentWeaponEntityId);
@@ -116,7 +160,7 @@ namespace MainGame
         {
             ClearCurrentWeapon();
             m_Owner = null;
-            m_WeaponSocket = null;
+            m_PrefabConfig = null;
         }
     }
 }

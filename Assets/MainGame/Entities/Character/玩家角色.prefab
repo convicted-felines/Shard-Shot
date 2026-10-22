@@ -163,6 +163,10 @@ MonoBehaviour:
   m_DetachLimbsOnDeath: 0
   m_DeathRagdollHideDelay: 3
   m_DeathScatterForce: 12
+  m_KnockdownRecoverDelay: 1.5
+  m_KnockdownScatterForce: 12
+  m_PostGetUpInvincibleDuration: 1
+  m_KnockdownPoseBlendDuration: 0.4
   m_WeaponSocket: {fileID: 2271861788608529594}
   m_DefaultWeapon: 1
 --- !u!1 &2271861788608529594 stripped

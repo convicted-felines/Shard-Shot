@@ -20,6 +20,23 @@ namespace MainGame
         [SerializeField]
         private float m_DeathScatterForce = 12f;
 
+        [Header("击飞起身")]
+        [SerializeField]
+        [Tooltip("受击布偶后等待起身的时间（秒）。")]
+        private float m_KnockdownRecoverDelay = 2f;
+
+        [SerializeField]
+        [Tooltip("击飞冲量大小。")]
+        private float m_KnockdownScatterForce = 12f;
+
+        [SerializeField]
+        [Tooltip("起身后无敌持续时间（秒）；击飞过程中始终无敌。")]
+        private float m_PostGetUpInvincibleDuration = 1.5f;
+
+        [SerializeField]
+        [Tooltip("布偶姿态缓动拟合到起身动画第一帧的时长（秒）。")]
+        private float m_KnockdownPoseBlendDuration = 0.4f;
+
         [Header("默认武器")]
         [SerializeField]
         private GameObject m_WeaponSocket;
@@ -32,7 +49,25 @@ namespace MainGame
 
         public GameObject WeaponSocket => m_WeaponSocket;
 
+        public Transform WeaponSocketTransform => m_WeaponSocket != null ? m_WeaponSocket.transform : null;
+
         public WeaponEnum DefaultWeapon => m_DefaultWeapon;
+
+        /// <summary>
+        /// 获取武器挂点相对实体根节点的路径（角色与布偶变体共用同一配置引用）。
+        /// </summary>
+        public bool TryGetWeaponAttachPath(Transform entityRoot, out string attachPath)
+        {
+            attachPath = null;
+            Transform socket = WeaponSocketTransform;
+            if (entityRoot == null || socket == null)
+            {
+                return false;
+            }
+
+            attachPath = TransformUtility.GetRelativeTransformPath(entityRoot, socket);
+            return !string.IsNullOrEmpty(attachPath);
+        }
 
         /// <summary>死亡时启用散架模式（依赖预制体关节 breakForce/breakTorque 配置；回池前仅重置骨骼默认 local 位姿）。</summary>
         public bool DetachLimbsOnDeath => m_DetachLimbsOnDeath;
@@ -40,5 +75,13 @@ namespace MainGame
         public float DeathRagdollHideDelay => m_DeathRagdollHideDelay;
 
         public float DeathScatterForce => m_DeathScatterForce;
+
+        public float KnockdownRecoverDelay => m_KnockdownRecoverDelay;
+
+        public float KnockdownScatterForce => m_KnockdownScatterForce;
+
+        public float PostGetUpInvincibleDuration => m_PostGetUpInvincibleDuration;
+
+        public float KnockdownPoseBlendDuration => m_KnockdownPoseBlendDuration;
     }
 }

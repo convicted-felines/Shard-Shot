@@ -23,6 +23,24 @@ namespace MainGame
 
         public bool IsValid => m_Bones.Count > 0;
 
+        public bool TryGetRootWorldPose(out Vector3 worldPosition, out Quaternion worldRotation)
+        {
+            for (int i = 0; i < m_Bones.Count; i++)
+            {
+                BonePose bone = m_Bones[i];
+                if (bone.BonePath == RootPath && bone.IsRoot)
+                {
+                    worldPosition = bone.WorldPosition;
+                    worldRotation = bone.WorldRotation;
+                    return true;
+                }
+            }
+
+            worldPosition = default;
+            worldRotation = Quaternion.identity;
+            return false;
+        }
+
         public void Clear()
         {
             m_Bones.Clear();
@@ -55,18 +73,23 @@ namespace MainGame
 
         public bool TryApplyToRagdoll(Transform ragdollRoot, string boneRootName)
         {
-            if (!IsValid || ragdollRoot == null || string.IsNullOrEmpty(boneRootName))
+            return TryApplyToHierarchy(ragdollRoot, boneRootName);
+        }
+
+        public bool TryApplyToHierarchy(Transform hierarchyRoot, string boneRootName)
+        {
+            if (!IsValid || hierarchyRoot == null || string.IsNullOrEmpty(boneRootName))
             {
                 return false;
             }
 
-            Transform hips = FindChildRecursive(ragdollRoot, boneRootName);
+            Transform hips = FindChildRecursive(hierarchyRoot, boneRootName);
             if (hips == null)
             {
                 return false;
             }
 
-            var pathToPose = BuildPathMap();
+            Dictionary<string, BonePose> pathToPose = BuildPathMap();
             if (!pathToPose.TryGetValue(RootPath, out BonePose hipsPose) || !hipsPose.IsRoot)
             {
                 return false;
@@ -75,6 +98,55 @@ namespace MainGame
             hips.SetPositionAndRotation(hipsPose.WorldPosition, hipsPose.WorldRotation);
             ApplyLocalRotationsRecursive(hips, pathToPose, RootPath);
             return true;
+        }
+
+        /// <summary>
+        /// 将 from/to 两套骨骼快照按 t 混合后写入层级（臀部混合世界位姿，子骨骼混合 localRotation）。
+        /// </summary>
+        public static bool TryApplyBlend(
+            Transform hierarchyRoot,
+            string boneRootName,
+            RagdollBonePoseSnapshot fromPose,
+            RagdollBonePoseSnapshot toPose,
+            float t)
+        {
+            if (hierarchyRoot == null
+                || string.IsNullOrEmpty(boneRootName)
+                || fromPose == null
+                || toPose == null
+                || !fromPose.IsValid
+                || !toPose.IsValid)
+            {
+                return false;
+            }
+
+            Transform hips = FindChildRecursive(hierarchyRoot, boneRootName);
+            if (hips == null)
+            {
+                return false;
+            }
+
+            Dictionary<string, BonePose> fromMap = fromPose.BuildPathMap();
+            Dictionary<string, BonePose> toMap = toPose.BuildPathMap();
+            if (!fromMap.TryGetValue(RootPath, out BonePose fromHips)
+                || !fromHips.IsRoot
+                || !toMap.TryGetValue(RootPath, out BonePose toHips)
+                || !toHips.IsRoot)
+            {
+                return false;
+            }
+
+            float blend = Mathf.Clamp01(t);
+            hips.position = Vector3.Lerp(fromHips.WorldPosition, toHips.WorldPosition, blend);
+            hips.localRotation = Quaternion.Slerp(fromHips.LocalRotation, toHips.LocalRotation, blend);
+            ApplyBlendedLocalRotationsRecursive(hips, fromMap, toMap, RootPath, blend);
+            return true;
+        }
+
+        /// <summary>将快照精确写入层级（混合结束时用于消除浮点误差）。</summary>
+        public bool TryApplyExactToHierarchy(Transform hierarchyRoot, string boneRootName)
+        {
+            return TryApplyToHierarchy(hierarchyRoot, boneRootName);
         }
 
         private Dictionary<string, BonePose> BuildPathMap()
@@ -105,6 +177,29 @@ namespace MainGame
             }
 
             return appliedCount;
+        }
+
+        private static void ApplyBlendedLocalRotationsRecursive(
+            Transform bone,
+            Dictionary<string, BonePose> fromMap,
+            Dictionary<string, BonePose> toMap,
+            string pathFromRoot,
+            float t)
+        {
+            for (int i = 0; i < bone.childCount; i++)
+            {
+                Transform child = bone.GetChild(i);
+                string childPath = BuildChildPath(pathFromRoot, child.name);
+                if (fromMap.TryGetValue(childPath, out BonePose fromPose)
+                    && toMap.TryGetValue(childPath, out BonePose toPose)
+                    && !fromPose.IsRoot
+                    && !toPose.IsRoot)
+                {
+                    child.localRotation = Quaternion.Slerp(fromPose.LocalRotation, toPose.LocalRotation, t);
+                }
+
+                ApplyBlendedLocalRotationsRecursive(child, fromMap, toMap, childPath, t);
+            }
         }
 
         private void CaptureRecursive(Transform bone, bool isRoot, string pathFromRoot)

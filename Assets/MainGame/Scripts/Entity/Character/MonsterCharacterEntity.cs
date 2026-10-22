@@ -8,11 +8,6 @@ namespace MainGame
     /// </summary>
     public class MonsterCharacterEntity : DamageableCharacterEntity
     {
-        private const string DefaultWeaponSocketName = "handslot.r";
-
-        [SerializeField]
-        private GameObject m_WeaponSocket;
-
         [SerializeField]
         private WeaponEnum m_DefaultWeapon = WeaponEnum.加特林;
 
@@ -89,8 +84,7 @@ namespace MainGame
                 m_WeaponComponent = gameObject.AddComponent<CharacterWeaponComponent>();
             }
 
-            Transform socket = ResolveWeaponSocket();
-            m_WeaponComponent.Initialize(this, socket);
+            m_WeaponComponent.Initialize(this, GetComponent<CharacterPrefabConfig>());
 
             m_RangedAttackComponent = GetComponent<CharacterRangedAttackComponent>();
             if (m_RangedAttackComponent == null)
@@ -129,17 +123,6 @@ namespace MainGame
             m_WeaponComponent.EquipWeapon(weapon);
         }
 
-        private Transform ResolveWeaponSocket()
-        {
-            if (m_WeaponSocket != null)
-            {
-                return m_WeaponSocket.transform;
-            }
-
-            Transform found = FindChildRecursive(CachedTransform, DefaultWeaponSocketName);
-            return found != null ? found : CachedTransform;
-        }
-
         private void FaceNearestHostileOrOrigin()
         {
             if (CharacterConfig != null
@@ -162,25 +145,6 @@ namespace MainGame
             }
 
             CachedTransform.rotation = Quaternion.LookRotation(direction.normalized, Vector3.up);
-        }
-
-        private static Transform FindChildRecursive(Transform parent, string name)
-        {
-            if (parent.name == name)
-            {
-                return parent;
-            }
-
-            for (int i = 0; i < parent.childCount; i++)
-            {
-                Transform found = FindChildRecursive(parent.GetChild(i), name);
-                if (found != null)
-                {
-                    return found;
-                }
-            }
-
-            return null;
         }
     }
 }

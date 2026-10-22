@@ -18,6 +18,8 @@ namespace MainGame
         public Vector3 ForceOriginWorld;
         public float ScatterForce;
         public float HideDelay;
+        /// <summary>击飞可恢复布偶绑定的角色实体 Id；死亡布偶为 0。</summary>
+        public int OwnerEntityId;
 
         public RagdollEntityData()
             : base(0, 0)
@@ -26,7 +28,8 @@ namespace MainGame
 
         public static RagdollEntityData Create(int entityId, Vector3 position, Quaternion rotation, Vector3 velocity,
             string boneRootName, RagdollBonePoseSnapshot bonePoseSnapshot, string assetName,
-            bool detachLimbs, Vector3 forceOriginWorld, float scatterForce, float hideDelay)
+            bool detachLimbs, Vector3 forceOriginWorld, float scatterForce, float hideDelay,
+            int ownerEntityId = 0)
         {
             var data = ReferencePool.Acquire<RagdollEntityData>();
             data.SetId(entityId);
@@ -42,6 +45,7 @@ namespace MainGame
             data.ForceOriginWorld = forceOriginWorld;
             data.ScatterForce = scatterForce;
             data.HideDelay = hideDelay;
+            data.OwnerEntityId = ownerEntityId;
             return data;
         }
 
@@ -56,6 +60,7 @@ namespace MainGame
             ForceOriginWorld = Vector3.zero;
             ScatterForce = 0f;
             HideDelay = 0f;
+            OwnerEntityId = 0;
         }
     }
 
@@ -68,8 +73,21 @@ namespace MainGame
         private const float CharacterJointProjectionAngle = 180f;
 
         private RagdollEntityData m_Data;
+        private CharacterPrefabConfig m_PrefabConfig;
         private Rigidbody m_HipsRigidbody;
         private Transform m_HipsTransform;
+        private int m_OwnerEntityId;
+
+        /// <summary>布偶骨骼根（通常为 hips / RagBoneRoot），供摄像机等跟随。</summary>
+        public Transform BoneRoot => m_HipsTransform;
+
+        /// <summary>臀部骨骼，起身位姿推算用。</summary>
+        public Transform HipsTransform => m_HipsTransform != null ? m_HipsTransform : CachedTransform;
+
+        public int OwnerEntityId => m_OwnerEntityId;
+
+        public CharacterPrefabConfig PrefabConfig => m_PrefabConfig;
+
         private Animator m_Animator;
         private List<Rigidbody> m_CachedRigidbodies;
         private Dictionary<Joint, (Rigidbody connectedBody, float breakForce, float breakTorque)> m_DefaultJointState;
@@ -87,6 +105,7 @@ namespace MainGame
         protected override void OnInit(object userData)
         {
             base.OnInit(userData);
+            m_PrefabConfig = GetComponent<CharacterPrefabConfig>();
             CacheDefaultJointState();
             CacheDefaultLocalPoses();
         }
@@ -101,6 +120,7 @@ namespace MainGame
                 return;
             }
 
+            m_OwnerEntityId = m_Data.OwnerEntityId;
             StopReleasePhysicsCoroutine();
 
             if (!m_Data.DetachLimbs)
@@ -146,10 +166,28 @@ namespace MainGame
             }
 
             m_Data = null;
+            m_OwnerEntityId = 0;
             m_HipsRigidbody = null;
             m_HipsTransform = null;
             m_Animator = null;
             base.OnHide(isShutdown, userData);
+        }
+
+        public bool IsBoundToOwner(int ownerEntityId)
+        {
+            return ownerEntityId != 0 && m_OwnerEntityId == ownerEntityId;
+        }
+
+        public bool TryGetHipsWorldPosition(out Vector3 worldPosition)
+        {
+            if (m_HipsTransform == null)
+            {
+                worldPosition = default;
+                return false;
+            }
+
+            worldPosition = m_HipsTransform.position;
+            return true;
         }
 
         private void CacheDefaultJointState()
