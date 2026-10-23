@@ -113,6 +113,26 @@ namespace MainGame
         }
 
         /// <summary>
+        /// 战斗判定与飘字用的世界坐标；击飞布偶阶段跟随布偶臀部推算的根节点位置。
+        /// </summary>
+        public bool TryGetCombatWorldPosition(out Vector3 worldPosition)
+        {
+            worldPosition = CachedTransform.position;
+
+            RagdollEntity ragdoll = FindActiveRagdollEntityFor(this);
+            if (ragdoll == null || !ragdoll.TryGetHipsWorldPosition(out Vector3 hipsWorld))
+            {
+                return true;
+            }
+
+            Vector3 hipLocalOffset = CharacterRagdollRecoveryUtility.ResolveHipLocalOffsetFromRoot(
+                CachedTransform,
+                m_PrefabConfig);
+            worldPosition = hipsWorld - CachedTransform.rotation * hipLocalOffset;
+            return true;
+        }
+
+        /// <summary>
         /// 击飞/起身用：设置世界位姿并清零刚体速度。
         /// </summary>
         public void SetCharacterWorldPose(Vector3 worldPosition, Quaternion worldRotation)

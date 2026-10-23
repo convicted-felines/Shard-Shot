@@ -105,6 +105,33 @@ namespace MainGame
             return ReadVector(m_Controls.Gameplay.Look, excludeGamepad: false);
         }
 
+        /// <summary>
+        /// 获取玩法瞄准点：键鼠/触屏为指针在水平面上的世界坐标；手柄为原点沿右摇杆方向延伸。
+        /// </summary>
+        public bool TryGetGameplayAimWorldPoint(float planeY, Vector3 origin, out Vector3 worldPoint)
+        {
+            worldPoint = default;
+            if (m_blockAllInput || m_Controls == null)
+            {
+                return false;
+            }
+
+            if (TryGetPointerGroundPoint(planeY, out worldPoint))
+            {
+                return true;
+            }
+
+            Vector2 lookInput = GetLookVector();
+            if (lookInput.sqrMagnitude <= 0.01f)
+            {
+                return false;
+            }
+
+            Vector3 lookDirection = new Vector3(lookInput.x, 0f, lookInput.y).normalized;
+            worldPoint = origin + lookDirection * 8f;
+            return true;
+        }
+
         public Vector2 GetVector(InputAction action)
         {
             return ReadVector(action, excludeGamepad: false);
@@ -250,6 +277,31 @@ namespace MainGame
             }
 
             return InputBinding.MaskByGroups(groups.ToArray());
+        }
+
+        private bool TryGetPointerGroundPoint(float planeY, out Vector3 worldPoint)
+        {
+            worldPoint = default;
+            if (!PointerInputUtility.TryGetPrimaryPointerScreenPosition(out Vector2 screenPosition))
+            {
+                return false;
+            }
+
+            Camera camera = Camera.main;
+            if (camera == null)
+            {
+                return false;
+            }
+
+            Ray ray = camera.ScreenPointToRay(screenPosition);
+            Plane plane = new Plane(Vector3.up, new Vector3(0f, planeY, 0f));
+            if (!plane.Raycast(ray, out float distance))
+            {
+                return false;
+            }
+
+            worldPoint = ray.GetPoint(distance);
+            return true;
         }
 
         private Vector2 ReadVector(InputAction action, bool excludeGamepad)

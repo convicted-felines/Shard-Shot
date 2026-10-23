@@ -18,6 +18,7 @@ namespace MainGame
         private MonsterCombatComponent m_CombatComponent;
         private MonsterMovementComponent m_MovementComponent;
         private CharacterStunComponent m_StunComponent;
+        private CharacterKnockbackComponent m_KnockbackComponent;
         private CharacterKnockdownComponent m_KnockdownComponent;
         private bool m_UseExplosionDeathForce;
         private Vector3 m_ExplosionDeathForceOrigin;
@@ -63,6 +64,12 @@ namespace MainGame
                 m_StunComponent = null;
             }
 
+            if (m_KnockbackComponent != null)
+            {
+                m_KnockbackComponent.Clear();
+                m_KnockbackComponent = null;
+            }
+
             if (m_KnockdownComponent != null)
             {
                 m_KnockdownComponent.Clear();
@@ -87,6 +94,7 @@ namespace MainGame
                 return;
             }
 
+            m_KnockbackComponent?.Tick(elapseSeconds);
             m_StunComponent?.Tick(elapseSeconds);
             if (m_StunComponent != null && m_StunComponent.IsStunned)
             {
@@ -133,7 +141,7 @@ namespace MainGame
             Log.Info("Monster character '{0}' destroyed.", Name);
         }
 
-        /// <summary>榴弹爆炸：扣血；未击飞则进入布偶，已击飞则再次冲量；致死则死亡散架。</summary>
+        /// <summary>榴弹爆炸：扣血；未击飞则进入布偶，布偶中则再次冲量，起身中则从当前姿态重新击飞；致死则死亡散架。</summary>
         public void ApplyExplosionHit(float damage, int attackerEntityId, Vector3 explosionCenter, float scatterForce)
         {
             if (!IsAlive || damage <= 0f)
@@ -151,6 +159,11 @@ namespace MainGame
                 ? scatterForce
                 : config != null ? config.DeathScatterForce : 12f;
             bool wasInRagdoll = m_KnockdownComponent != null && m_KnockdownComponent.IsInRagdollPhase;
+            bool wasInRecovery = m_KnockdownComponent != null && m_KnockdownComponent.IsInRecoveryPhase;
+            if (wasInRagdoll)
+            {
+                m_KnockdownComponent.SyncOwnerPositionWithActiveRagdoll();
+            }
 
             m_UseExplosionDeathForce = true;
             m_ExplosionDeathForceOrigin = explosionCenter;
@@ -171,6 +184,12 @@ namespace MainGame
                 return;
             }
 
+            if (wasInRecovery)
+            {
+                m_KnockdownComponent?.TryReenterKnockdownFromRecovery(attackerEntityId, scatterForce, explosionCenter);
+                return;
+            }
+
             TryEnterKnockdown(attackerEntityId, scatterForce, explosionCenter);
         }
 
@@ -185,6 +204,7 @@ namespace MainGame
         {
             m_Animator = GetComponentInChildren<Animator>();
             m_StunComponent = CharacterStunComponent.Ensure(this, m_Animator);
+            m_KnockbackComponent = CharacterKnockbackComponent.Ensure(this);
             m_KnockdownComponent = CharacterKnockdownComponent.Ensure(this, BuildMonsterKnockdownOptions());
 
             m_WeaponComponent = GetComponent<CharacterWeaponComponent>();

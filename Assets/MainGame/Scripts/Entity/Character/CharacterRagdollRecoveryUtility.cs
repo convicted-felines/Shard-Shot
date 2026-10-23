@@ -93,7 +93,7 @@ namespace MainGame
             if (hipBone != null && animFirstFramePose != null && animFirstFramePose.IsValid)
             {
                 Vector3 hipLocalOffset = character.CachedTransform.InverseTransformPoint(hipBone.position);
-                recoveryPosition = SnapRecoveryRootToGround(ragdollHipsWorld - recoveryRotation * hipLocalOffset);
+                recoveryPosition = ragdollHipsWorld - recoveryRotation * hipLocalOffset;
                 character.SetCharacterWorldPose(recoveryPosition, recoveryRotation);
                 animFirstFramePose = character.SampleGetUpAnimationFirstFrame(getUpAnimatorStateName, boneRootName);
             }
@@ -146,8 +146,16 @@ namespace MainGame
             Quaternion recoveryRotation)
         {
             Vector3 hipLocalOffset = ResolveHipLocalOffsetFromRoot(characterRoot, config);
-            Vector3 rootWorld = ragdollHipsWorld - recoveryRotation * hipLocalOffset;
-            return SnapRecoveryRootToGround(rootWorld);
+            return ragdollHipsWorld - recoveryRotation * hipLocalOffset;
+        }
+
+        /// <summary>
+        /// 平面地图：将根节点 XZ 保持不变，Y 强制为 0。
+        /// </summary>
+        public static bool TryGetGroundedRootPosition(Vector3 rootWorld, out Vector3 groundedRoot)
+        {
+            groundedRoot = new Vector3(rootWorld.x, 0f, rootWorld.z);
+            return true;
         }
 
         public static Vector3 ResolveHipLocalOffsetFromRoot(Transform characterRoot, CharacterPrefabConfig config)
@@ -360,25 +368,9 @@ namespace MainGame
 
         private static Vector3 SnapRecoveryRootToGround(Vector3 rootWorld)
         {
-            int mask = Physics.DefaultRaycastLayers;
-            Vector3 rayOrigin = rootWorld + Vector3.up * RecoverBelowGroundProbeSky;
-            if (!Physics.Raycast(rayOrigin, Vector3.down, out RaycastHit hit,
-                    RecoverBelowGroundProbeSky + RecoverBelowGroundProbeDown, mask, QueryTriggerInteraction.Ignore))
-            {
-                return rootWorld;
-            }
-
-            if (hit.normal.y < RecoverGroundMinNormalY)
-            {
-                return rootWorld;
-            }
-
-            if (rootWorld.y < hit.point.y - RecoverBelowGroundEpsilon)
-            {
-                return new Vector3(rootWorld.x, hit.point.y + RecoverBelowGroundEpsilon, rootWorld.z);
-            }
-
-            return rootWorld;
+            return TryGetGroundedRootPosition(rootWorld, out Vector3 groundedRoot)
+                ? groundedRoot
+                : rootWorld;
         }
     }
 }

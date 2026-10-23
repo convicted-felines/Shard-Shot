@@ -61,6 +61,14 @@ namespace MainGame
         [Tooltip("分裂小弹命中定身时长（秒）")]
         private float m_ScatterStunDuration = 0.4f;
 
+        [SerializeField]
+        [Tooltip("普通子弹命中击退强度（沿子弹飞行方向的平面冲量）")]
+        private float m_KnockbackForce = 4f;
+
+        [SerializeField]
+        [Tooltip("铅弹命中击退强度倍率（相对普通子弹）")]
+        private float m_LeadKnockbackMultiplier = 2f;
+
         private float m_CurrentAttackSpeed;
 
         public float GetEffectiveAttackSpeed()
@@ -106,10 +114,17 @@ namespace MainGame
                     m_LeadStunDuration,
                     BulletKind.Lead);
                 ConfigureLeadScatter(leadData);
+                leadData.KnockbackForce = m_KnockbackForce * m_LeadKnockbackMultiplier;
                 return leadData;
             }
 
-            return base.CreateBulletData(direction, rotation, muzzle);
+            BulletData data = base.CreateBulletData(direction, rotation, muzzle);
+            if (data != null)
+            {
+                data.KnockbackForce = m_KnockbackForce;
+            }
+
+            return data;
         }
 
         private bool ShouldSpawnLeadBullet()

@@ -11,6 +11,8 @@ namespace MainGame
     {
         private const float DefaultRecoverDelay = 2f;
         private const float DefaultPoseBlendDuration = 0.4f;
+        private const float DefaultGroundSnapDuration = 0.5f;
+        private const float GroundSnapHeightThreshold = 0.05f;
 
         private enum KnockdownPhase
         {
@@ -41,6 +43,11 @@ namespace MainGame
         private RagdollBonePoseSnapshot m_RagdollPoseSnapshot;
         private RagdollBonePoseSnapshot m_AnimFirstFramePoseSnapshot;
         private bool m_WeaponTransferredToRagdoll;
+        private float m_GroundSnapStartY;
+        private float m_GroundSnapTargetY;
+        private float m_GroundSnapElapsed;
+        private float m_GroundSnapDuration;
+        private bool m_GroundSnapActive;
 
         /// <summary>击飞布偶中、骨骼拟合或起身动画播放中。</summary>
         public bool IsKnockedDown => m_Phase == KnockdownPhase.Ragdoll
@@ -49,6 +56,10 @@ namespace MainGame
 
         /// <summary>仅处于物理布偶阶段（可再次受爆炸冲量）。</summary>
         public bool IsInRagdollPhase => m_Phase == KnockdownPhase.Ragdoll;
+
+        /// <summary>骨骼拟合或起身动画播放中（可自当前姿态重新击飞）。</summary>
+        public bool IsInRecoveryPhase => m_Phase == KnockdownPhase.PoseBlending
+            || m_Phase == KnockdownPhase.GettingUp;
 
         public bool IsInvincible => IsKnockedDown || m_InvincibleRemaining > 0f;
 
@@ -132,6 +143,7 @@ namespace MainGame
             switch (m_Phase)
             {
                 case KnockdownPhase.Ragdoll:
+                    SyncOwnerPositionWithActiveRagdoll();
                     TryTransferWeaponToRagdoll();
                     TickRagdollRecover(elapseSeconds);
                     break;
@@ -139,7 +151,7 @@ namespace MainGame
                     TickPoseBlending(elapseSeconds);
                     break;
                 case KnockdownPhase.GettingUp:
-                    TickGetUpAnimation();
+                    TickGetUpAnimation(elapseSeconds);
                     break;
             }
         }
@@ -183,6 +195,27 @@ namespace MainGame
             return ragdollEntityId != 0;
         }
 
+        /// <summary>击飞布偶阶段将隐藏的角色根节点同步到布偶位置（爆炸范围、飘字等依赖实体坐标）。</summary>
+        public void SyncOwnerPositionWithActiveRagdoll()
+        {
+            if (m_Owner == null || !IsInRagdollPhase)
+            {
+                return;
+            }
+
+            RagdollEntity ragdoll = ResolveActiveRagdoll();
+            if (ragdoll == null || !ragdoll.TryGetHipsWorldPosition(out Vector3 hipsWorld))
+            {
+                return;
+            }
+
+            Vector3 hipLocalOffset = CharacterRagdollRecoveryUtility.ResolveHipLocalOffsetFromRoot(
+                m_Owner.CachedTransform,
+                m_Owner.PrefabConfig);
+            Vector3 rootWorld = hipsWorld - m_Owner.CachedTransform.rotation * hipLocalOffset;
+            m_Owner.SetCharacterWorldPose(rootWorld, m_Owner.CachedTransform.rotation);
+        }
+
         /// <summary>布偶阶段再次受爆炸：施加冲量并重置起身倒计时。</summary>
         public void ApplyRagdollExplosionForce(Vector3 forceOriginWorld, float scatterForce)
         {
@@ -194,6 +227,46 @@ namespace MainGame
             RagdollEntity ragdoll = ResolveActiveRagdoll();
             ragdoll?.ApplyExplosionScatterForce(forceOriginWorld, scatterForce);
             m_Elapsed = 0f;
+        }
+
+        /// <summary>起身拟合/起身动画阶段再次受击：从当前姿态重新进入布偶。</summary>
+        public bool TryReenterKnockdownFromRecovery(int attackerEntityId, float scatterForce = 0f, Vector3? forceOriginWorld = null)
+        {
+            if (m_Owner == null || !IsInRecoveryPhase)
+            {
+                return false;
+            }
+
+            RefreshTimingFromConfig();
+            CharacterPrefabConfig config = m_Owner.PrefabConfig;
+            if (scatterForce <= 0f)
+            {
+                scatterForce = config != null ? config.KnockdownScatterForce : 12f;
+            }
+
+            ClearPoseSnapshots();
+            m_GetUpAnimatorStateName = null;
+            m_GetUpPlaybackStarted = false;
+            m_WeaponTransferredToRagdoll = false;
+            m_Phase = KnockdownPhase.Ragdoll;
+            m_Elapsed = 0f;
+            m_PoseBlendElapsed = 0f;
+            m_InvincibleRemaining = 0f;
+
+            m_Owner.SetAnimatorEnabledForPoseBlend(false);
+            m_Owner.SetKnockdownPresentationActive(false);
+            int ragdollEntityId = m_Owner.SpawnKnockdownRagdoll(attackerEntityId, scatterForce, forceOriginWorld);
+            m_ActiveRagdollEntityId = ragdollEntityId;
+            TryTransferWeaponToRagdoll();
+
+            if (m_Options.FollowCameraWithRagdoll
+                && ragdollEntityId != 0
+                && TopDownFollowCameraEntity.TryGetActive(out TopDownFollowCameraEntity camera))
+            {
+                camera.SetFollowEntity(ragdollEntityId);
+            }
+
+            return ragdollEntityId != 0;
         }
 
         private void RefreshTimingFromConfig()
@@ -243,6 +316,8 @@ namespace MainGame
                 camera.SetFollowEntity(m_Owner.Id);
             }
 
+            BeginGroundSnapEase();
+
             if (!canBlend || m_PoseBlendDuration <= 0f)
             {
                 StartGetUpAnimationPlayback();
@@ -256,6 +331,7 @@ namespace MainGame
                 m_RagdollPoseSnapshot,
                 m_AnimFirstFramePoseSnapshot,
                 0f);
+            ApplyGroundSnapEase(0f);
         }
 
         private void TickPoseBlending(float elapseSeconds)
@@ -268,11 +344,18 @@ namespace MainGame
             m_PoseBlendElapsed += elapseSeconds;
             float blend01 = Mathf.Clamp01(m_PoseBlendElapsed / m_PoseBlendDuration);
             float smoothBlend = Mathf.SmoothStep(0f, 1f, blend01);
+            m_GroundSnapElapsed += elapseSeconds;
+            float groundSnap01 = Mathf.SmoothStep(0f, 1f, Mathf.Clamp01(m_GroundSnapElapsed / m_GroundSnapDuration));
             CharacterRagdollRecoveryUtility.TryApplyRecoverPoseBlend(
                 m_Owner,
                 m_RagdollPoseSnapshot,
                 m_AnimFirstFramePoseSnapshot,
                 smoothBlend);
+            ApplyGroundSnapEase(groundSnap01);
+            if (groundSnap01 >= 1f)
+            {
+                m_GroundSnapActive = false;
+            }
 
             if (blend01 < 1f)
             {
@@ -293,18 +376,22 @@ namespace MainGame
                     1f);
             }
 
+            ApplyGroundSnapEase(1f);
+            m_GroundSnapActive = false;
             m_Owner.BeginGetUpAnimationPlayback(m_GetUpAnimatorStateName);
             m_GetUpPlaybackStarted = true;
             m_Phase = KnockdownPhase.GettingUp;
             ClearPoseSnapshots();
         }
 
-        private void TickGetUpAnimation()
+        private void TickGetUpAnimation(float elapseSeconds)
         {
             if (m_Owner == null)
             {
                 return;
             }
+
+            TickGroundSnapEase(elapseSeconds);
 
             if (!m_Owner.IsGetUpAnimationComplete(m_GetUpPlaybackStarted, m_GetUpAnimatorStateName))
             {
@@ -314,8 +401,61 @@ namespace MainGame
             FinishGetUp();
         }
 
+        private void BeginGroundSnapEase()
+        {
+            m_GroundSnapElapsed = 0f;
+            m_GroundSnapDuration = m_PoseBlendDuration > 0f ? m_PoseBlendDuration : DefaultGroundSnapDuration;
+            m_GroundSnapStartY = m_Owner.CachedTransform.position.y;
+            m_GroundSnapTargetY = 0f;
+            m_GroundSnapActive = m_GroundSnapStartY > GroundSnapHeightThreshold;
+        }
+
+        private void TickGroundSnapEase(float elapseSeconds)
+        {
+            if (!m_GroundSnapActive || m_Owner == null)
+            {
+                return;
+            }
+
+            m_GroundSnapElapsed += elapseSeconds;
+            float eased01 = Mathf.SmoothStep(0f, 1f, Mathf.Clamp01(m_GroundSnapElapsed / m_GroundSnapDuration));
+            ApplyGroundSnapEase(eased01);
+
+            if (eased01 >= 1f)
+            {
+                m_GroundSnapActive = false;
+            }
+        }
+
+        private void ApplyGroundSnapEase(float eased01)
+        {
+            if (m_Owner == null)
+            {
+                return;
+            }
+
+            Vector3 position = m_Owner.CachedTransform.position;
+            position.y = Mathf.Lerp(m_GroundSnapStartY, m_GroundSnapTargetY, eased01);
+            m_Owner.SetCharacterWorldPose(position, m_Owner.CachedTransform.rotation);
+        }
+
+        private void FinishGroundSnap()
+        {
+            if (m_Owner == null)
+            {
+                m_GroundSnapActive = false;
+                return;
+            }
+
+            Vector3 position = m_Owner.CachedTransform.position;
+            position.y = 0f;
+            m_Owner.SetCharacterWorldPose(position, m_Owner.CachedTransform.rotation);
+            m_GroundSnapActive = false;
+        }
+
         private void FinishGetUp()
         {
+            FinishGroundSnap();
             m_Phase = KnockdownPhase.None;
             m_GetUpAnimatorStateName = null;
             m_GetUpPlaybackStarted = false;
@@ -400,6 +540,9 @@ namespace MainGame
             m_GetUpAnimatorStateName = null;
             m_GetUpPlaybackStarted = false;
             m_WeaponTransferredToRagdoll = false;
+            m_GroundSnapActive = false;
+            m_GroundSnapElapsed = 0f;
+            m_GroundSnapDuration = 0f;
             ClearPoseSnapshots();
         }
 

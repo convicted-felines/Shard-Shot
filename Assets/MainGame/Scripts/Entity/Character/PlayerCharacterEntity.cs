@@ -15,6 +15,7 @@ namespace MainGame
         private CharacterWeaponComponent m_WeaponComponent;
         private CharacterCombatComponent m_CombatComponent;
         private CharacterKnockdownComponent m_KnockdownComponent;
+        private CharacterKnockbackComponent m_KnockbackComponent;
         private CharacterStunComponent m_StunComponent;
 
         private float m_CurrentHealth;
@@ -81,6 +82,7 @@ namespace MainGame
             EquipWeapon(WeaponEnum.加特林);
 
             m_KnockdownComponent = CharacterKnockdownComponent.Ensure(this, BuildPlayerKnockdownOptions());
+            m_KnockbackComponent = CharacterKnockbackComponent.Ensure(this);
             m_StunComponent = CharacterStunComponent.Ensure(this, m_Animator);
 
             if (Rigidbody == null)
@@ -103,6 +105,12 @@ namespace MainGame
             {
                 m_StunComponent.Clear();
                 m_StunComponent = null;
+            }
+
+            if (m_KnockbackComponent != null)
+            {
+                m_KnockbackComponent.Clear();
+                m_KnockbackComponent = null;
             }
 
             if (m_WeaponComponent != null)
@@ -133,6 +141,7 @@ namespace MainGame
                 return;
             }
 
+            m_KnockbackComponent?.Tick(elapseSeconds);
             m_StunComponent?.Tick(elapseSeconds);
             if (IsStunned)
             {
@@ -217,7 +226,15 @@ namespace MainGame
             }
 
             float moveSpeed = CharacterConfig.MoveSpeed;
-            CharacterRigidbodyUtility.ApplyPlanarVelocity(Rigidbody, moveDirection * moveSpeed);
+            Vector3 intendedVelocity = moveDirection * moveSpeed;
+            if (m_KnockbackComponent != null)
+            {
+                m_KnockbackComponent.ApplyToRigidbody(Rigidbody, intendedVelocity);
+            }
+            else
+            {
+                CharacterRigidbodyUtility.ApplyPlanarVelocity(Rigidbody, intendedVelocity);
+            }
 
             UpdateAnimator(moveSpeed, elapseSeconds);
 

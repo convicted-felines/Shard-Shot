@@ -362,7 +362,7 @@ MonoBehaviour:
   m_ShellEjectPoint: {fileID: 8454253113449805356}
   m_FireHeight: 1
   m_DefaultForwardDistance: 0.8
-  m_BurstChance: 0.536
+  m_BurstChance: 0.1
   m_BurstExtraCountMin: 2
   m_BurstExtraCountMax: 4
   m_BurstInterval: 0.08

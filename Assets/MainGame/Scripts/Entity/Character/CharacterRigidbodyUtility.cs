@@ -71,5 +71,29 @@ namespace MainGame
 
             return new Vector3(rigidbody.velocity.x, 0f, rigidbody.velocity.z).magnitude;
         }
+
+        /// <summary>
+        /// 沿水平方向叠加击退冲量（保留当前 Y 轴速度）。
+        /// </summary>
+        public static void ApplyPlanarKnockback(Rigidbody rigidbody, Vector3 direction, float force)
+        {
+            if (rigidbody == null || force <= 0f)
+            {
+                return;
+            }
+
+            direction.y = 0f;
+            if (direction.sqrMagnitude <= 0.001f)
+            {
+                return;
+            }
+
+            direction.Normalize();
+            Vector3 velocity = rigidbody.velocity;
+            velocity += direction * force;
+            velocity.y = rigidbody.velocity.y;
+            rigidbody.angularVelocity = Vector3.zero;
+            rigidbody.velocity = velocity;
+        }
     }
 }

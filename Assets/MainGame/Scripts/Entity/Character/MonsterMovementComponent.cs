@@ -15,6 +15,7 @@ namespace MainGame
         private DamageableCharacterEntity m_Owner;
         private MonsterCombatComponent m_CombatComponent;
         private CharacterStunComponent m_StunComponent;
+        private CharacterKnockbackComponent m_KnockbackComponent;
         private Animator m_Animator;
         private float m_AnimatorSpeed;
 
@@ -25,6 +26,7 @@ namespace MainGame
             m_Owner = owner;
             m_CombatComponent = combatComponent;
             m_StunComponent = owner != null ? owner.GetComponent<CharacterStunComponent>() : null;
+            m_KnockbackComponent = owner != null ? owner.GetComponent<CharacterKnockbackComponent>() : null;
             m_Animator = animator;
             m_AnimatorSpeed = 0f;
         }
@@ -50,7 +52,7 @@ namespace MainGame
 
             if (m_CombatComponent != null && m_CombatComponent.IsAttacking)
             {
-                CharacterRigidbodyUtility.StopPlanarMovement(rigidbody);
+                ApplyMovementVelocity(rigidbody, Vector3.zero);
                 UpdateAnimator(elapseSeconds);
                 IsMoving = false;
                 return;
@@ -58,7 +60,7 @@ namespace MainGame
 
             if (!CharacterTargetingUtility.TryFindNearestHostile(m_Owner, out CharacterEntity target))
             {
-                CharacterRigidbodyUtility.StopPlanarMovement(rigidbody);
+                ApplyMovementVelocity(rigidbody, Vector3.zero);
                 UpdateAnimator(elapseSeconds);
                 IsMoving = false;
                 return;
@@ -73,7 +75,7 @@ namespace MainGame
             float attackRangeSqr = attackRange * attackRange;
             if (toTarget.sqrMagnitude <= attackRangeSqr)
             {
-                CharacterRigidbodyUtility.StopPlanarMovement(rigidbody);
+                ApplyMovementVelocity(rigidbody, Vector3.zero);
                 CharacterTargetingUtility.RotateToward(
                     m_Owner,
                     targetPosition,
@@ -86,7 +88,7 @@ namespace MainGame
 
             Vector3 moveDirection = toTarget.normalized;
             float moveSpeed = m_Owner.CharacterConfig.MoveSpeed;
-            CharacterRigidbodyUtility.ApplyPlanarVelocity(rigidbody, moveDirection * moveSpeed);
+            ApplyMovementVelocity(rigidbody, moveDirection * moveSpeed);
 
             CharacterTargetingUtility.RotateToward(
                 m_Owner,
@@ -95,6 +97,23 @@ namespace MainGame
                 elapseSeconds);
             UpdateAnimator(elapseSeconds);
             UpdateMovingState();
+        }
+
+        private void ApplyMovementVelocity(Rigidbody rigidbody, Vector3 intendedPlanarVelocity)
+        {
+            if (m_KnockbackComponent != null)
+            {
+                m_KnockbackComponent.ApplyToRigidbody(rigidbody, intendedPlanarVelocity);
+                return;
+            }
+
+            if (intendedPlanarVelocity.sqrMagnitude <= 0.001f)
+            {
+                CharacterRigidbodyUtility.StopPlanarMovement(rigidbody);
+                return;
+            }
+
+            CharacterRigidbodyUtility.ApplyPlanarVelocity(rigidbody, intendedPlanarVelocity);
         }
 
         private void UpdateMovingState()
@@ -127,6 +146,7 @@ namespace MainGame
             m_Owner = null;
             m_CombatComponent = null;
             m_StunComponent = null;
+            m_KnockbackComponent = null;
             m_Animator = null;
         }
     }

@@ -113,7 +113,10 @@ namespace MainGame
                 other,
                 m_BulletData.Damage,
                 m_BulletData.StunDuration,
-                m_BulletData.OwnerEntityId))
+                m_BulletData.OwnerEntityId,
+                m_BulletData.Direction,
+                m_BulletData.KnockbackForce,
+                CachedTransform.position))
             {
                 if (m_BulletData.Kind == BulletKind.Lead)
                 {

@@ -75,25 +75,17 @@ namespace MainGame
 
 
 
-            CharacterEntity facingTarget = null;
-
-            if (m_Owner.CharacterConfig != null)
-
+            Vector3? facingWorldPosition = null;
+            if (m_Owner.CharacterConfig != null
+                && GameEntry.Control.TryGetGameplayAimWorldPoint(
+                    m_Owner.CachedTransform.position.y,
+                    m_Owner.CachedTransform.position,
+                    out Vector3 aimWorldPoint))
             {
-
-                CharacterTargetingUtility.TryFindNearestHostile(
-
-                    m_Owner,
-
-                    m_Owner.CharacterConfig.AttackRange,
-
-                    out facingTarget);
-
+                facingWorldPosition = aimWorldPoint;
             }
 
-
-
-            m_RangedAttack.Tick(elapseSeconds, wantsAttack, interruptAttack, facingTarget);
+            m_RangedAttack.Tick(elapseSeconds, wantsAttack, interruptAttack, null, facingWorldPosition);
 
         }
 

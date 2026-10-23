@@ -98,6 +98,8 @@ MonoBehaviour:
   m_ScatterArcDegrees: 60
   m_ScatterDamageMultiplier: 0.5
   m_ScatterStunDuration: 0.4
+  m_KnockbackForce: 4
+  m_LeadKnockbackMultiplier: 2
 --- !u!1 &4022719589700448334
 GameObject:
   m_ObjectHideFlags: 0

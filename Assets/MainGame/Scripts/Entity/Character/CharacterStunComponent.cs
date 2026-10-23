@@ -126,7 +126,15 @@ namespace MainGame
         {
             if (m_Owner?.Rigidbody != null)
             {
-                CharacterRigidbodyUtility.StopPlanarMovement(m_Owner.Rigidbody);
+                CharacterKnockbackComponent knockback = m_Owner.GetComponent<CharacterKnockbackComponent>();
+                if (knockback != null)
+                {
+                    knockback.ApplyToRigidbody(m_Owner.Rigidbody, Vector3.zero);
+                }
+                else
+                {
+                    CharacterRigidbodyUtility.StopPlanarMovement(m_Owner.Rigidbody);
+                }
             }
 
             m_Animator?.SetFloat(SpeedParamHash, 0f);

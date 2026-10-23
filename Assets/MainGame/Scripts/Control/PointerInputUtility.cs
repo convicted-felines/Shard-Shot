@@ -33,6 +33,30 @@ namespace MainGame
             }
         }
 
+        /// <summary>
+        /// 当前主指针屏幕坐标：优先触摸，否则鼠标。
+        /// </summary>
+        public static bool TryGetPrimaryPointerScreenPosition(out Vector2 screenPosition)
+        {
+            EnsureInitialized();
+
+            if (Touch.activeTouches.Count > 0)
+            {
+                screenPosition = Touch.activeTouches[0].screenPosition;
+                return true;
+            }
+
+            Mouse mouse = Mouse.current;
+            if (mouse != null)
+            {
+                screenPosition = mouse.position.ReadValue();
+                return true;
+            }
+
+            screenPosition = default;
+            return false;
+        }
+
         public static bool GetMouseButton(int button)
         {
             Mouse mouse = Mouse.current;

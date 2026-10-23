@@ -191,7 +191,8 @@ namespace MainGame
                     continue;
                 }
 
-                Vector3 offset = character.CachedTransform.position - center;
+                character.TryGetCombatWorldPosition(out Vector3 combatPosition);
+                Vector3 offset = combatPosition - center;
                 offset.y = 0f;
                 if (offset.sqrMagnitude > radiusSqr)
                 {

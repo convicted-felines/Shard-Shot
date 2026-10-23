@@ -114,6 +114,15 @@ namespace MainGame
             set;
         }
 
+        /// <summary>
+        /// 命中击退强度（沿子弹飞行方向的平面冲量）；0 表示不击退。
+        /// </summary>
+        public float KnockbackForce
+        {
+            get;
+            set;
+        }
+
         public static BulletData Create(string bulletAssetName, int ownerEntityId, Vector3 position, Quaternion rotation,
             Vector3 direction, float damage, float speed, float explodeDelay = 0f, float stunDuration = 0f,
             BulletKind kind = BulletKind.Normal)
@@ -149,6 +158,7 @@ namespace MainGame
             ScatterArcDegrees = 0f;
             ScatterDamage = 0f;
             ScatterStunDuration = 0f;
+            KnockbackForce = 0f;
             Direction = Vector3.forward;
             BulletAssetName = null;
         }

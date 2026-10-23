@@ -39,7 +39,13 @@ namespace MainGame
         /// <param name="wantsAttack">是否希望开始或持续攻击。</param>
         /// <param name="interruptAttack">是否打断当前攻击（如移动、失去目标）。</param>
         /// <param name="facingTarget">攻击期间朝向的目标，可为 null。</param>
-        public void Tick(float elapseSeconds, bool wantsAttack, bool interruptAttack, CharacterEntity facingTarget)
+        /// <param name="facingWorldPosition">攻击期间朝向的世界坐标；优先于 facingTarget。</param>
+        public void Tick(
+            float elapseSeconds,
+            bool wantsAttack,
+            bool interruptAttack,
+            CharacterEntity facingTarget,
+            Vector3? facingWorldPosition = null)
         {
             if (m_Owner == null || m_WeaponComponent == null)
             {
@@ -74,7 +80,7 @@ namespace MainGame
                 }
             }
 
-            UpdateFacing(facingTarget, elapseSeconds);
+            UpdateFacing(facingTarget, facingWorldPosition, elapseSeconds);
             TickGatlingRamp(rangedWeapon, elapseSeconds, wantsAttack, interruptAttack);
 
             m_AttackElapsed += elapseSeconds;
@@ -166,16 +172,30 @@ namespace MainGame
             }
         }
 
-        private void UpdateFacing(CharacterEntity facingTarget, float elapseSeconds)
+        private void UpdateFacing(CharacterEntity facingTarget, Vector3? facingWorldPosition, float elapseSeconds)
         {
-            if (facingTarget == null || m_Owner.CharacterConfig == null)
+            if (m_Owner.CharacterConfig == null)
+            {
+                return;
+            }
+
+            Vector3 targetPosition;
+            if (facingWorldPosition.HasValue)
+            {
+                targetPosition = facingWorldPosition.Value;
+            }
+            else if (facingTarget != null)
+            {
+                targetPosition = facingTarget.CachedTransform.position;
+            }
+            else
             {
                 return;
             }
 
             CharacterTargetingUtility.RotateToward(
                 m_Owner,
-                facingTarget.CachedTransform.position,
+                targetPosition,
                 m_Owner.CharacterConfig.TurnSpeed,
                 elapseSeconds);
         }
