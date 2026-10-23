@@ -100,6 +100,24 @@ namespace MainGame
                     ""processors"": """",
                     ""interactions"": """",
                     ""initialStateCheck"": false
+                },
+                {
+                    ""name"": ""Fire"",
+                    ""type"": ""Button"",
+                    ""id"": ""7e568791-2790-459d-98ac-b63aab329f09"",
+                    ""expectedControlType"": """",
+                    ""processors"": """",
+                    ""interactions"": """",
+                    ""initialStateCheck"": false
+                },
+                {
+                    ""name"": ""New action1"",
+                    ""type"": ""Button"",
+                    ""id"": ""715a6971-7719-4d34-8252-63b0b684d6d1"",
+                    ""expectedControlType"": """",
+                    ""processors"": """",
+                    ""interactions"": """",
+                    ""initialStateCheck"": false
                 }
             ],
             ""bindings"": [
@@ -388,6 +406,39 @@ namespace MainGame
                     ""action"": ""Pause"",
                     ""isComposite"": false,
                     ""isPartOfComposite"": false
+                },
+                {
+                    ""name"": """",
+                    ""id"": ""23fdd910-0a0c-49bb-a6a6-d0706514fbb2"",
+                    ""path"": ""<Mouse>/leftButton"",
+                    ""interactions"": """",
+                    ""processors"": """",
+                    ""groups"": """",
+                    ""action"": ""Fire"",
+                    ""isComposite"": false,
+                    ""isPartOfComposite"": false
+                },
+                {
+                    ""name"": """",
+                    ""id"": ""c4aa3237-7e1e-44f8-9ff7-037b49cdafeb"",
+                    ""path"": ""<XInputController>/buttonSouth"",
+                    ""interactions"": """",
+                    ""processors"": """",
+                    ""groups"": """",
+                    ""action"": ""Fire"",
+                    ""isComposite"": false,
+                    ""isPartOfComposite"": false
+                },
+                {
+                    ""name"": """",
+                    ""id"": ""1755fa4a-4d68-4d33-98d6-3c991dc1751f"",
+                    ""path"": """",
+                    ""interactions"": """",
+                    ""processors"": """",
+                    ""groups"": """",
+                    ""action"": ""New action1"",
+                    ""isComposite"": false,
+                    ""isPartOfComposite"": false
                 }
             ]
         }
@@ -443,6 +494,8 @@ namespace MainGame
             m_Gameplay_Interact = m_Gameplay.FindAction("Interact", throwIfNotFound: true);
             m_Gameplay_Attack = m_Gameplay.FindAction("Attack", throwIfNotFound: true);
             m_Gameplay_Pause = m_Gameplay.FindAction("Pause", throwIfNotFound: true);
+            m_Gameplay_Fire = m_Gameplay.FindAction("Fire", throwIfNotFound: true);
+            m_Gameplay_Newaction1 = m_Gameplay.FindAction("New action1", throwIfNotFound: true);
         }
 
         ~@GameControls()
@@ -517,6 +570,8 @@ namespace MainGame
         private readonly InputAction m_Gameplay_Interact;
         private readonly InputAction m_Gameplay_Attack;
         private readonly InputAction m_Gameplay_Pause;
+        private readonly InputAction m_Gameplay_Fire;
+        private readonly InputAction m_Gameplay_Newaction1;
         public struct GameplayActions
         {
             private @GameControls m_Wrapper;
@@ -529,6 +584,8 @@ namespace MainGame
             public InputAction @Interact => m_Wrapper.m_Gameplay_Interact;
             public InputAction @Attack => m_Wrapper.m_Gameplay_Attack;
             public InputAction @Pause => m_Wrapper.m_Gameplay_Pause;
+            public InputAction @Fire => m_Wrapper.m_Gameplay_Fire;
+            public InputAction @Newaction1 => m_Wrapper.m_Gameplay_Newaction1;
             public InputActionMap Get() { return m_Wrapper.m_Gameplay; }
             public void Enable() { Get().Enable(); }
             public void Disable() { Get().Disable(); }
@@ -562,6 +619,12 @@ namespace MainGame
                 @Pause.started += instance.OnPause;
                 @Pause.performed += instance.OnPause;
                 @Pause.canceled += instance.OnPause;
+                @Fire.started += instance.OnFire;
+                @Fire.performed += instance.OnFire;
+                @Fire.canceled += instance.OnFire;
+                @Newaction1.started += instance.OnNewaction1;
+                @Newaction1.performed += instance.OnNewaction1;
+                @Newaction1.canceled += instance.OnNewaction1;
             }
 
             private void UnregisterCallbacks(IGameplayActions instance)
@@ -590,6 +653,12 @@ namespace MainGame
                 @Pause.started -= instance.OnPause;
                 @Pause.performed -= instance.OnPause;
                 @Pause.canceled -= instance.OnPause;
+                @Fire.started -= instance.OnFire;
+                @Fire.performed -= instance.OnFire;
+                @Fire.canceled -= instance.OnFire;
+                @Newaction1.started -= instance.OnNewaction1;
+                @Newaction1.performed -= instance.OnNewaction1;
+                @Newaction1.canceled -= instance.OnNewaction1;
             }
 
             public void RemoveCallbacks(IGameplayActions instance)
@@ -644,6 +713,8 @@ namespace MainGame
             void OnInteract(InputAction.CallbackContext context);
             void OnAttack(InputAction.CallbackContext context);
             void OnPause(InputAction.CallbackContext context);
+            void OnFire(InputAction.CallbackContext context);
+            void OnNewaction1(InputAction.CallbackContext context);
         }
     }
 }

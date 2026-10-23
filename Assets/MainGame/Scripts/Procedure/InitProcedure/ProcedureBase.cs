@@ -12,8 +12,8 @@ namespace MainGame
 {
     public abstract class ProcedureBase : GameFramework.Procedure.ProcedureBase
     {
-        protected int m_EnterProcedure = 1;
-        protected string m_EnterScene = "Menu";
+        protected int m_EnterProcedure = (int)ProcedureEnum.游戏流程;
+        protected string m_EnterScene = "Game";
 
         protected void ChangeToTargetProcedure(ProcedureOwner procedureOwner, ProcedureEnum procedureId)
         {
@@ -21,6 +21,9 @@ namespace MainGame
             {
                 case ProcedureEnum.菜单流程:
                     ChangeState<ProcedureMenu>(procedureOwner);
+                    break;
+                case ProcedureEnum.游戏流程:
+                    ChangeState<ProcedureGame>(procedureOwner);
                     break;
 
                 default:
@@ -44,5 +47,10 @@ namespace MainGame
         /// 菜单流程
         /// </summary>
         菜单流程 = 1,
+
+        /// <summary>
+        /// 游戏流程
+        /// </summary>
+        游戏流程 = 2,
     }
 }

@@ -64,6 +64,21 @@ namespace MainGame
             return Utility.Text.Format("Assets/MainGame/Entities/{0}.prefab", assetName);
         }
 
+        public static string GetCharacterAsset(string assetName)
+        {
+            return Utility.Text.Format("Assets/MainGame/Entities/Character/{0}.prefab", assetName);
+        }
+
+        public static string GetCharacterRagdollAsset(string assetName)
+        {
+            return Utility.Text.Format("Assets/MainGame/Entities/Character/{0}.prefab", assetName);
+        }
+
+        public static string GetWeaponAsset(string assetName)
+        {
+            return Utility.Text.Format("Assets/MainGame/Entities/Weapon/{0}.prefab", assetName);
+        }
+
         public static string GetWorldUIAsset(string assetName)
         {
             return Utility.Text.Format("Assets/MainGame/Entities/WorldUI/{0}.prefab", assetName);
@@ -72,6 +87,11 @@ namespace MainGame
         public static string GetEmptyEntity()
         {
             return "Assets/MainGame/Entities/Other/EmptyEntity.prefab";
+        }
+
+        public static string GetOtherEntityAsset(string assetName)
+        {
+            return Utility.Text.Format("Assets/MainGame/Entities/Other/{0}.prefab", assetName);
         }
 
         public static string GetUIFormAsset(string assetName)

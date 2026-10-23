@@ -64,6 +64,7 @@ namespace MainGame
             "UISound",
             "UITranslation",
             "WorldUI",
+            "Character","Weapon",
         };
 
 
@@ -108,7 +109,7 @@ namespace MainGame
                 }
             }
 
-            // 初始进入游戏时默认进入菜单场景菜单流程
+            // 初始进入游戏时直接进入游戏场景与游戏流程
             procedureOwner.SetData<VarInt32>(ProcedureChangeScene.NextProcedureIdKey, m_EnterProcedure);
             procedureOwner.SetData<VarString>(ProcedureChangeScene.NextSceneNameKey, m_EnterScene);
             ChangeState<ProcedureChangeScene>(procedureOwner);

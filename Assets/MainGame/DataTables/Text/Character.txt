@@ -1,0 +1,6 @@
+#	角色表
+#	Id		Name	AssetName	RagdollName	MoveSpeed	TurnSpeed	Health	AttackRange
+#	int		string	string	string	float	float	float	float
+#	编号	策划备注	名称	资源名称	布偶资源名称	移动速度	转身速度	生命值	攻击距离
+	1		玩家角色	玩家角色	玩家角色Ragdoll	4	8	100	20
+	2		骑士机器人	骑士机器人	骑士机器人Ragdoll	2	4	500	1.5

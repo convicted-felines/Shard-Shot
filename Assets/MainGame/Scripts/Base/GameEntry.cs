@@ -1,4 +1,5 @@
 ﻿using UnityEngine;
+using UnityEngine.SceneManagement;
 
 namespace MainGame
 {
@@ -11,6 +12,18 @@ namespace MainGame
         {
             InitBuiltinComponents();
             InitCustomComponents();
+            Sound.RefreshBuiltInAudioListener();
+            SceneManager.sceneLoaded += OnSceneLoaded;
+        }
+
+        private void OnDestroy()
+        {
+            SceneManager.sceneLoaded -= OnSceneLoaded;
+        }
+
+        private void OnSceneLoaded(Scene scene, LoadSceneMode mode)
+        {
+            Sound.RefreshBuiltInAudioListener();
         }
     }
 }

@@ -3,4 +3,4 @@
 #	int		string	string
 #	场景编号	策划备注	名称	资源名称
 	1	游戏入口场景	入口场景	GameEntryScene
-	2	菜单场景	菜单场景	Menu
+	2	游戏场景	游戏场景	Game

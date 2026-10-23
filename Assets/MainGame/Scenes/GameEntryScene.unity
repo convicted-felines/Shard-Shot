@@ -610,7 +610,7 @@ PrefabInstance:
     - target: {fileID: 5260654791754704518, guid: 419c7e1a3a27841debb0a95b47d38bd3,
         type: 3}
       propertyPath: m_AvailableProcedureTypeNames.Array.size
-      value: 11
+      value: 12
       objectReference: {fileID: 0}
     - target: {fileID: 5260654791754704518, guid: 419c7e1a3a27841debb0a95b47d38bd3,
         type: 3}
@@ -667,10 +667,15 @@ PrefabInstance:
       propertyPath: m_AvailableProcedureTypeNames.Array.data[10]
       value: MainGame.ProcedureMenu
       objectReference: {fileID: 0}
+    - target: {fileID: 5260654791754704518, guid: 419c7e1a3a27841debb0a95b47d38bd3,
+        type: 3}
+      propertyPath: m_AvailableProcedureTypeNames.Array.data[11]
+      value: MainGame.ProcedureGame
+      objectReference: {fileID: 0}
     - target: {fileID: 5260654791754745306, guid: 419c7e1a3a27841debb0a95b47d38bd3,
         type: 3}
       propertyPath: m_EntityGroups.Array.size
-      value: 4
+      value: 5
       objectReference: {fileID: 0}
     - target: {fileID: 5260654791754745306, guid: 419c7e1a3a27841debb0a95b47d38bd3,
         type: 3}
@@ -699,8 +704,13 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 5260654791754745306, guid: 419c7e1a3a27841debb0a95b47d38bd3,
         type: 3}
+      propertyPath: m_EntityGroups.Array.data[4].m_Name
+      value: RagDoll
+      objectReference: {fileID: 0}
+    - target: {fileID: 5260654791754745306, guid: 419c7e1a3a27841debb0a95b47d38bd3,
+        type: 3}
       propertyPath: m_EntityGroups.Array.data[0].m_InstanceCapacity
-      value: 20
+      value: 60
       objectReference: {fileID: 0}
     - target: {fileID: 5260654791754745306, guid: 419c7e1a3a27841debb0a95b47d38bd3,
         type: 3}
@@ -720,7 +730,7 @@ PrefabInstance:
     - target: {fileID: 5260654791754745306, guid: 419c7e1a3a27841debb0a95b47d38bd3,
         type: 3}
       propertyPath: m_EntityGroups.Array.data[2].m_InstanceCapacity
-      value: 32
+      value: 64
       objectReference: {fileID: 0}
     - target: {fileID: 5260654791754745306, guid: 419c7e1a3a27841debb0a95b47d38bd3,
         type: 3}
@@ -740,12 +750,12 @@ PrefabInstance:
     - target: {fileID: 5260654791754745306, guid: 419c7e1a3a27841debb0a95b47d38bd3,
         type: 3}
       propertyPath: m_EntityGroups.Array.data[4].m_InstanceCapacity
-      value: 50
+      value: 4
       objectReference: {fileID: 0}
     - target: {fileID: 5260654791754745306, guid: 419c7e1a3a27841debb0a95b47d38bd3,
         type: 3}
       propertyPath: m_EntityGroups.Array.data[4].m_InstancePriority
-      value: 1
+      value: 3
       objectReference: {fileID: 0}
     - target: {fileID: 5260654791754745306, guid: 419c7e1a3a27841debb0a95b47d38bd3,
         type: 3}
@@ -820,7 +830,7 @@ PrefabInstance:
     - target: {fileID: 5260654791754745306, guid: 419c7e1a3a27841debb0a95b47d38bd3,
         type: 3}
       propertyPath: m_EntityGroups.Array.data[4].m_InstanceExpireTime
-      value: 15
+      value: 20
       objectReference: {fileID: 0}
     - target: {fileID: 5260654791754745306, guid: 419c7e1a3a27841debb0a95b47d38bd3,
         type: 3}
@@ -870,7 +880,7 @@ PrefabInstance:
     - target: {fileID: 5260654791754745306, guid: 419c7e1a3a27841debb0a95b47d38bd3,
         type: 3}
       propertyPath: m_EntityGroups.Array.data[4].m_InstanceAutoReleaseInterval
-      value: 30
+      value: 60
       objectReference: {fileID: 0}
     - target: {fileID: 5260654791754745306, guid: 419c7e1a3a27841debb0a95b47d38bd3,
         type: 3}
@@ -1050,7 +1060,7 @@ PrefabInstance:
     - target: {fileID: 5260654792684559981, guid: 419c7e1a3a27841debb0a95b47d38bd3,
         type: 3}
       propertyPath: m_enableKeyboardMouse
-      value: 0
+      value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 5260654792684559981, guid: 419c7e1a3a27841debb0a95b47d38bd3,
         type: 3}
