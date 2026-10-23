@@ -11,6 +11,7 @@ namespace MainGame
         private float m_CurrentHealth;
         private bool m_IsAlive;
         private int m_LastAttackerEntityId;
+        private CharacterWorldHealthBarComponent m_HealthBarComponent;
 
         public bool IsAlive => m_IsAlive;
 
@@ -25,10 +26,14 @@ namespace MainGame
             m_CurrentHealth = MaxHealth;
             m_IsAlive = m_CurrentHealth > 0f;
             m_LastAttackerEntityId = 0;
+            m_HealthBarComponent = CharacterWorldHealthBarComponent.Ensure(this);
+            m_HealthBarComponent.Show(GetHealthProgress01());
         }
 
         protected void ClearHealthState()
         {
+            m_HealthBarComponent?.Clear();
+            m_HealthBarComponent = null;
             m_IsAlive = false;
             m_CurrentHealth = 0f;
             m_LastAttackerEntityId = 0;
@@ -48,6 +53,7 @@ namespace MainGame
             }
 
             GameEntry.Entity.ShowWorldUIFloatingText(Id, $"-{damage:0}");
+            m_HealthBarComponent?.SetProgress(GetHealthProgress01());
 
             if (m_CurrentHealth <= 0f)
             {
@@ -58,12 +64,18 @@ namespace MainGame
         protected void MarkDead()
         {
             m_IsAlive = false;
+            m_HealthBarComponent?.Hide();
         }
 
         protected virtual void OnDead()
         {
             MarkDead();
             SpawnDeathRagdollAndHide(m_LastAttackerEntityId);
+        }
+
+        private float GetHealthProgress01()
+        {
+            return MaxHealth > 0f ? m_CurrentHealth / MaxHealth : 0f;
         }
 
         public static void SetupDamageReceivers(CharacterEntity owner, IDamageable damageable)

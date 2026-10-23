@@ -30,6 +30,12 @@ namespace MainGame
             GameEntry.ProgressObserver?.OnProcedureEnter(typeof(ProcedureGame));
             GameEntry.Control?.EnableAllGameControl();
             OpenUIFromData(procedureOwner);
+
+            if (!GameEntry.UI.HasUIForm(UIFormEnum.主界面))
+            {
+                GameEntry.UI.OpenUIForm(UIFormEnum.主界面, this);
+            }
+
             m_KnightEntityIds.Clear();
             m_KnightSpawnTimer = KnightSpawnIntervalMin;
             SpawnPlayer();
@@ -45,6 +51,19 @@ namespace MainGame
         protected override void OnLeave(ProcedureOwner procedureOwner, bool isShutdown)
         {
             GameEntry.Control?.BlockAllGameControl();
+            GameEntry.Base.ResetNormalGameSpeed();
+
+            UGuiForm settingForm = GameEntry.UI.GetUIForm(UIFormEnum.设置界面);
+            if (settingForm != null)
+            {
+                settingForm.Close(true);
+            }
+
+            UGuiForm menuForm = GameEntry.UI.GetUIForm(UIFormEnum.主界面);
+            if (menuForm != null)
+            {
+                menuForm.Close(true);
+            }
 
             if (m_CameraEntityId != 0)
             {

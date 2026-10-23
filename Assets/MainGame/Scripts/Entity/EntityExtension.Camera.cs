@@ -19,7 +19,7 @@ namespace MainGame
 
             data.AssetName = TopDownFollowCameraAssetName;
             data.EntityName = TopDownFollowCameraAssetName;
-            entityComponent.ShowEntity(typeof(TopDownFollowCameraEntity), Constant.EntityGroup.Default,
+            entityComponent.ShowEntity(typeof(TopDownFollowCameraEntity), Constant.EntityGroup.Gameplay,
                 AssetUtility.GetOtherEntityAsset(TopDownFollowCameraAssetName), Constant.AssetPriority.Other, data);
         }
     }

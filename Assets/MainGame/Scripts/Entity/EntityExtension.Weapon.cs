@@ -26,7 +26,7 @@ namespace MainGame
             data.AssetName = drWeapon.AssetName;
             data.EntityName = drWeapon.Name;
             Type logicType = ResolveWeaponLogicType(data.TypeId, drWeapon);
-            entityComponent.ShowEntity(logicType, Constant.EntityGroup.Default,
+            entityComponent.ShowEntity(logicType, Constant.EntityGroup.Gameplay,
                 AssetUtility.GetWeaponAsset(drWeapon.AssetName), Constant.AssetPriority.Other, data);
         }
 

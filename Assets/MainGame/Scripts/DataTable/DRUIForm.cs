@@ -137,6 +137,10 @@ namespace MainGame
         /// 主界面
         /// </summary>
         主界面 = 100,
+        /// <summary>
+        /// 设置界面
+        /// </summary>
+        设置界面 = 101,
     }
 
 

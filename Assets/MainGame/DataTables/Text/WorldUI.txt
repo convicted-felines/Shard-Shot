@@ -2,5 +2,6 @@
 #	Id		Name	AssetName
 #	int		string	string
 #	编号	策划备注	名称	资源名称
-	1		工作进度条	工作进度条
+	1		进度条	进度条
 	2		普通字体1	普通字体1
+	3		进度条红	进度条红

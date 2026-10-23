@@ -170,7 +170,17 @@ namespace MainGame
                 Entity follow = GameEntry.Entity.GetGameEntity(m_WorldUIData.FollowEntityId);
                 if (follow != null)
                 {
-                    position = follow.CachedTransform.position + m_WorldUIData.FollowOffset;
+                    if (m_WorldUIData.FollowMode == WorldUIFollowMode.CharacterHealthBar
+                        && follow is CharacterEntity character
+                        && character.TryGetWorldHealthBarPosition(m_WorldUIData.FixedWorldY, out Vector3 barPosition))
+                    {
+                        position = barPosition;
+                    }
+                    else
+                    {
+                        position = follow.CachedTransform.position + m_WorldUIData.FollowOffset;
+                    }
+
                     m_WorldUIData.Position = position;
                 }
                 else if (!force)

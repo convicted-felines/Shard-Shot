@@ -113,6 +113,23 @@ namespace MainGame
         }
 
         /// <summary>
+        /// 世界血条位置：固定世界 Y，XZ 来自角色根；击飞布偶阶段取臀部关节。
+        /// </summary>
+        public bool TryGetWorldHealthBarPosition(float fixedWorldY, out Vector3 worldPosition)
+        {
+            Vector3 xzSource = CachedTransform.position;
+
+            RagdollEntity ragdoll = FindActiveRagdollEntityFor(this);
+            if (ragdoll != null && ragdoll.TryGetHipsWorldPosition(out Vector3 hipsWorld))
+            {
+                xzSource = hipsWorld;
+            }
+
+            worldPosition = new Vector3(xzSource.x, fixedWorldY, xzSource.z);
+            return true;
+        }
+
+        /// <summary>
         /// 战斗判定与飘字用的世界坐标；击飞布偶阶段跟随布偶臀部推算的根节点位置。
         /// </summary>
         public bool TryGetCombatWorldPosition(out Vector3 worldPosition)

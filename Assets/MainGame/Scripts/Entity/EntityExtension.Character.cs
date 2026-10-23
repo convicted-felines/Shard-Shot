@@ -38,7 +38,7 @@ namespace MainGame
             {
                 logicType = typeof(CharacterEntity);
             }
-            entityComponent.ShowEntity(logicType, Constant.EntityGroup.Default,
+            entityComponent.ShowEntity(logicType, Constant.EntityGroup.Gameplay,
                 AssetUtility.GetCharacterAsset(drCharacter.AssetName), Constant.AssetPriority.Other, data);
         }
     }

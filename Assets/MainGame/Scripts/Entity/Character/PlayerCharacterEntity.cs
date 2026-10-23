@@ -17,6 +17,7 @@ namespace MainGame
         private CharacterKnockdownComponent m_KnockdownComponent;
         private CharacterKnockbackComponent m_KnockbackComponent;
         private CharacterStunComponent m_StunComponent;
+        private CharacterWorldHealthBarComponent m_HealthBarComponent;
 
         private float m_CurrentHealth;
         private bool m_IsAlive;
@@ -54,6 +55,8 @@ namespace MainGame
 
             m_CurrentHealth = MaxHealth;
             m_IsAlive = m_CurrentHealth > 0f;
+            m_HealthBarComponent = CharacterWorldHealthBarComponent.Ensure(this);
+            m_HealthBarComponent.Show(GetHealthProgress01());
             DamageableCharacterEntity.SetupDamageReceivers(this, this);
 
             m_WeaponComponent = GetComponent<CharacterWeaponComponent>();
@@ -95,6 +98,9 @@ namespace MainGame
 
         protected override void OnHide(bool isShutdown, object userData)
         {
+            m_HealthBarComponent?.Clear();
+            m_HealthBarComponent = null;
+
             if (m_KnockdownComponent != null)
             {
                 m_KnockdownComponent.Clear();
@@ -161,6 +167,7 @@ namespace MainGame
 
             m_CurrentHealth = Mathf.Max(0f, m_CurrentHealth - damage);
             GameEntry.Entity.ShowWorldUIFloatingText(Id, $"-{damage:0}");
+            m_HealthBarComponent?.SetProgress(GetHealthProgress01());
 
             if (m_CurrentHealth <= 0f)
             {
@@ -183,6 +190,7 @@ namespace MainGame
         private void OnDead(int attackerEntityId)
         {
             m_IsAlive = false;
+            m_HealthBarComponent?.Hide();
 
             DeathRagdollSettings settings = GetDeathRagdollSettings();
             Vector3 forceOrigin = ResolveDeathForceOrigin(attackerEntityId);
@@ -267,6 +275,11 @@ namespace MainGame
         private bool IsCombatFacingLocked()
         {
             return m_CombatComponent != null && m_CombatComponent.IsAttacking;
+        }
+
+        private float GetHealthProgress01()
+        {
+            return MaxHealth > 0f ? m_CurrentHealth / MaxHealth : 0f;
         }
 
         private CharacterKnockdownComponent.Options BuildPlayerKnockdownOptions()

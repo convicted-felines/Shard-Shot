@@ -30,6 +30,10 @@ namespace MainGame
 
         [SerializeField] private TMP_Text m_LanguageChangeHintText = null;
 
+        [Header("游戏暂停")]
+        [SerializeField] private CommonButton m_ReturnButton = null;
+        [SerializeField] private CommonButton m_RestartButton = null;
+
         private readonly List<LanguageOptionEntry> m_LanguageOptionEntries = new List<LanguageOptionEntry>();
 
         private bool m_IsRefreshingView = false;
@@ -50,16 +54,105 @@ namespace MainGame
             m_OriginalLanguage = GameEntry.Localization.Language;
             RebuildLanguageOptions();
             RefreshView();
+            BindGameplayButtons();
         }
 
         protected override void OnClose(bool isShutdown, object userData)
         {
+            UnbindGameplayButtons();
             base.OnClose(isShutdown, userData);
 
             m_IsRefreshingView = false;
             m_OriginalLanguage = Language.Unspecified;
             m_NeedRestartForLanguage = false;
             ClearLanguageOptionEntries();
+        }
+
+        public void OnClickReturn()
+        {
+            Close();
+
+            if (!GameEntry.Base.IsGamePaused)
+            {
+                return;
+            }
+
+            GameEntry.Base.ResumeGame();
+            GameEntry.Control?.EnableAllGameControl();
+        }
+
+        public void OnClickRestart()
+        {
+            if (!(GameEntry.Procedure.CurrentProcedure is ProcedureGame))
+            {
+                return;
+            }
+
+            ProcedureFlowBase flow = GameEntry.Procedure.CurrentFlowProcedure();
+            if (flow == null)
+            {
+                return;
+            }
+
+            Close(true);
+            GameEntry.Base.ResetNormalGameSpeed();
+            GameEntry.Entity.HideAllLoadedEntities();
+            flow.StartGame(ProcedureEnum.游戏流程, SceneEnum.游戏场景);
+        }
+
+        private void BindGameplayButtons()
+        {
+            EnsureGameplayButtonsResolved();
+            BindButton(m_ReturnButton, OnClickReturn);
+            BindButton(m_RestartButton, OnClickRestart);
+        }
+
+        private void UnbindGameplayButtons()
+        {
+            UnbindButton(m_ReturnButton, OnClickReturn);
+            UnbindButton(m_RestartButton, OnClickRestart);
+        }
+
+        private void EnsureGameplayButtonsResolved()
+        {
+            if (m_ReturnButton == null)
+            {
+                Transform returnTransform = transform.Find("Form/返回");
+                if (returnTransform != null)
+                {
+                    m_ReturnButton = returnTransform.GetComponent<CommonButton>();
+                }
+            }
+
+            if (m_RestartButton == null)
+            {
+                Transform restartTransform = transform.Find("Form/重新开始");
+                if (restartTransform != null)
+                {
+                    m_RestartButton = restartTransform.GetComponent<CommonButton>();
+                }
+            }
+        }
+
+        private static void BindButton(CommonButton button, UnityEngine.Events.UnityAction onClick)
+        {
+            if (button == null)
+            {
+                return;
+            }
+
+            button.m_OnClick.RemoveListener(onClick);
+            button.m_OnClick.AddListener(onClick);
+        }
+
+        private static void UnbindButton(CommonButton button, UnityEngine.Events.UnityAction onClick)
+        {
+            if (button == null)
+            {
+                return;
+            }
+
+            button.m_OnClick.RemoveListener(onClick);
         }
 
         /// <summary>

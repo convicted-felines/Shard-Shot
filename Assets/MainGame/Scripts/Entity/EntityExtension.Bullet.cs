@@ -19,7 +19,7 @@ namespace MainGame
             data.AssetName = data.BulletAssetName;
             data.EntityName = data.BulletAssetName;
             Type logicType = data.ExplodeDelay > 0f ? typeof(GrenadeBulletEntity) : typeof(BulletEntity);
-            entityComponent.ShowEntity(logicType, Constant.EntityGroup.Default,
+            entityComponent.ShowEntity(logicType, Constant.EntityGroup.Projectile,
                 AssetUtility.GetWeaponAsset(data.BulletAssetName), Constant.AssetPriority.Other, data);
         }
     }

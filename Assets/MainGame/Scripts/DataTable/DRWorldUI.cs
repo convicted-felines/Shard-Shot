@@ -103,11 +103,15 @@ namespace MainGame
         /// <summary>
         /// 
         /// </summary>
-        工作进度条 = 1,
+        进度条 = 1,
         /// <summary>
         /// 
         /// </summary>
         普通字体1 = 2,
+        /// <summary>
+        /// 
+        /// </summary>
+        进度条红 = 3,
     }
 
 

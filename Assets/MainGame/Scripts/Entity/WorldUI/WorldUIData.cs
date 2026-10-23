@@ -3,6 +3,16 @@ using UnityEngine;
 
 namespace MainGame
 {
+    /// <summary>世界 UI 跟随模式。</summary>
+    public enum WorldUIFollowMode
+    {
+        /// <summary>跟随目标 Transform 位置 + 偏移。</summary>
+        Default = 0,
+
+        /// <summary>角色血条：固定世界 Y，XZ 来自角色根或击飞布偶臀部。</summary>
+        CharacterHealthBar = 1,
+    }
+
     /// <summary>
     /// 世界 UI 实体数据。TypeId 对应 <see cref="WorldUIEnum"/> / DRWorldUI.Id。
     /// </summary>
@@ -22,6 +32,20 @@ namespace MainGame
 
         /// <summary>相对跟随目标的世界空间偏移。</summary>
         public Vector3 FollowOffset
+        {
+            get;
+            set;
+        }
+
+        /// <summary>跟随模式。</summary>
+        public WorldUIFollowMode FollowMode
+        {
+            get;
+            set;
+        }
+
+        /// <summary><see cref="WorldUIFollowMode.CharacterHealthBar"/> 时使用的固定世界 Y。</summary>
+        public float FixedWorldY
         {
             get;
             set;
@@ -74,6 +98,8 @@ namespace MainGame
             data.SetTypeId((int)worldUIEnum);
             data.FollowEntityId = followEntityId;
             data.FollowOffset = followOffset;
+            data.FollowMode = WorldUIFollowMode.Default;
+            data.FixedWorldY = 0f;
             data.FaceCamera = faceCamera;
             data.Progress = 0f;
             data.DisplayText = null;
@@ -91,6 +117,8 @@ namespace MainGame
             data.SetTypeId((int)worldUIEnum);
             data.FollowEntityId = 0;
             data.FollowOffset = Vector3.zero;
+            data.FollowMode = WorldUIFollowMode.Default;
+            data.FixedWorldY = 0f;
             data.FaceCamera = faceCamera;
             data.Progress = 0f;
             data.DisplayText = null;
@@ -98,6 +126,17 @@ namespace MainGame
             data.FloatRiseDistance = 0f;
             data.Position = position;
             data.Rotation = rotation;
+            return data;
+        }
+
+        /// <summary>角色血条：跟随角色实体，固定世界 Y，XZ 随角色或击飞布偶臀部。</summary>
+        public static WorldUIData CreateCharacterHealthBar(WorldUIEnum worldUIEnum, int followEntityId, float progress01,
+            float fixedWorldY = Constant.WorldUI.HealthBarFixedWorldY, bool faceCamera = true)
+        {
+            WorldUIData data = Create(worldUIEnum, followEntityId, Vector3.zero, faceCamera);
+            data.FollowMode = WorldUIFollowMode.CharacterHealthBar;
+            data.FixedWorldY = fixedWorldY;
+            data.Progress = Mathf.Clamp01(progress01);
             return data;
         }
 
@@ -117,6 +156,8 @@ namespace MainGame
             base.Clear();
             FollowEntityId = 0;
             FollowOffset = Vector3.zero;
+            FollowMode = WorldUIFollowMode.Default;
+            FixedWorldY = 0f;
             FaceCamera = false;
             Progress = 0f;
             DisplayText = null;
