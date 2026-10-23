@@ -96,7 +96,6 @@ namespace MainGame
 
             Close(true);
             GameEntry.Base.ResetNormalGameSpeed();
-            GameEntry.Entity.HideAllLoadedEntities();
             flow.StartGame(ProcedureEnum.游戏流程, SceneEnum.游戏场景);
         }
 

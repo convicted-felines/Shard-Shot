@@ -154,6 +154,8 @@ namespace MainGame
             }
 
             m_HasExploded = true;
+
+            GameEntry.Juice?.PlayEffectAtPrefabRotation(EffectEnum.榴弹爆炸, CachedTransform.position);
             ApplyExplosionEffects();
             GameEntry.Entity.HideEntity(this);
         }

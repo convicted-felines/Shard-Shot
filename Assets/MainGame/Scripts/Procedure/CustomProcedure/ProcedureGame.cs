@@ -65,19 +65,22 @@ namespace MainGame
                 menuForm.Close(true);
             }
 
-            if (m_CameraEntityId != 0)
+            if (m_CameraEntityId != 0 && GameEntry.Entity.HasEntity(m_CameraEntityId))
             {
                 GameEntry.Entity.HideEntity(m_CameraEntityId);
-                m_CameraEntityId = 0;
             }
 
-            if (m_PlayerEntityId != 0)
+            m_CameraEntityId = 0;
+
+            if (m_PlayerEntityId != 0 && GameEntry.Entity.HasEntity(m_PlayerEntityId))
             {
                 GameEntry.Entity.HideEntity(m_PlayerEntityId);
-                m_PlayerEntityId = 0;
             }
 
+            m_PlayerEntityId = 0;
+
             HideAllKnights();
+            GameEntry.Entity.HideAllLoadedRagdolls();
 
             GameEntry.Sound.RefreshBuiltInAudioListener();
             GameEntry.ProgressObserver?.OnProcedureLeave(typeof(ProcedureGame));
@@ -151,7 +154,7 @@ namespace MainGame
             for (int i = 0; i < m_KnightEntityIds.Count; i++)
             {
                 int entityId = m_KnightEntityIds[i];
-                if (entityId != 0)
+                if (entityId != 0 && GameEntry.Entity.HasEntity(entityId))
                 {
                     GameEntry.Entity.HideEntity(entityId);
                 }

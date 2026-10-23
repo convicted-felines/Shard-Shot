@@ -300,6 +300,14 @@ namespace MainGame
             }
         }
 
+        /// <summary>
+        /// 在角色位置播放死亡特效（Y 偏移取自 Effect 表 EffectHeight）。
+        /// </summary>
+        protected void PlayCharacterDeathEffect()
+        {
+            GameEntry.Juice?.PlayEffectAtPrefabRotation(EffectEnum.角色死亡, CachedTransform.position);
+        }
+
         protected struct DeathRagdollSettings
         {
             public bool DetachLimbs;

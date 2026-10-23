@@ -191,6 +191,7 @@ namespace MainGame
         {
             m_IsAlive = false;
             m_HealthBarComponent?.Hide();
+            PlayCharacterDeathEffect();
 
             DeathRagdollSettings settings = GetDeathRagdollSettings();
             Vector3 forceOrigin = ResolveDeathForceOrigin(attackerEntityId);

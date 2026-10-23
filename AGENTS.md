@@ -85,4 +85,5 @@ UI 打开：GameEntry.UI.OpenUIForm(UIFormEnum.Xxx) 或 UIExtension
 - [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) — 模块关系与数据流
 - [docs/CONVENTIONS.md](docs/CONVENTIONS.md) — 命名、目录、代码风格
 - [docs/ADD_FEATURE.md](docs/ADD_FEATURE.md) — 分步 Checklist
+- [docs/JUICE_PLAN.md](docs/JUICE_PLAN.md) — 手感细化 3 天计划（Juice / 音效 / 刷怪 / HUD）
 - [.cursor/rules/](.cursor/rules/) — Cursor 持久规则

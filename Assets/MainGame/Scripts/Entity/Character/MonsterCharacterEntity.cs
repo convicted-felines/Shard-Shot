@@ -116,6 +116,11 @@ namespace MainGame
         {
             MarkDead();
 
+            if (TypeId == (int)CharacterEnum.骑士机器人)
+            {
+                PlayCharacterDeathEffect();
+            }
+
             DeathRagdollSettings settings = GetDeathRagdollSettings();
             Vector3 forceOrigin = m_UseExplosionDeathForce
                 ? m_ExplosionDeathForceOrigin

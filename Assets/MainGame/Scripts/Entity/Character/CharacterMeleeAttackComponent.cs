@@ -128,8 +128,21 @@ namespace MainGame
                 return;
             }
 
+            PlayerCharacterEntity playerTarget = target as PlayerCharacterEntity;
+            bool playKnightHitEffect = playerTarget != null
+                && playerTarget.IsAlive
+                && !playerTarget.IsInvincible
+                && (WeaponEnum)weaponConfig.Id == WeaponEnum.骑士剑;
+
             m_HasAppliedDamageThisCycle = true;
             damageable.TakeDamage(weaponConfig.Damage, m_Owner.Id);
+
+            if (playKnightHitEffect)
+            {
+                GameEntry.Juice?.PlayEffectAtPrefabRotation(
+                    EffectEnum.骑士剑击中,
+                    playerTarget.CachedTransform.position);
+            }
         }
 
         private void BeginAttackCycle(DRWeapon weaponConfig)

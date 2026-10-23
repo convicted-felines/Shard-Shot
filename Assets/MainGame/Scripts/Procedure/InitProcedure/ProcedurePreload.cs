@@ -64,7 +64,7 @@ namespace MainGame
             "UISound",
             "UITranslation",
             "WorldUI",
-            "Character","Weapon",
+            "Character","Weapon","Effect"
         };
 
 

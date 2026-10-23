@@ -123,6 +123,15 @@ namespace MainGame
             set;
         }
 
+        /// <summary>
+        /// 命中造成伤害时播放的特效；<see cref="EffectEnum.Unknown"/> 表示不播放。
+        /// </summary>
+        public EffectEnum HitEffect
+        {
+            get;
+            set;
+        }
+
         public static BulletData Create(string bulletAssetName, int ownerEntityId, Vector3 position, Quaternion rotation,
             Vector3 direction, float damage, float speed, float explodeDelay = 0f, float stunDuration = 0f,
             BulletKind kind = BulletKind.Normal)
@@ -159,6 +168,7 @@ namespace MainGame
             ScatterDamage = 0f;
             ScatterStunDuration = 0f;
             KnockbackForce = 0f;
+            HitEffect = EffectEnum.Unknown;
             Direction = Vector3.forward;
             BulletAssetName = null;
         }

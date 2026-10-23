@@ -1,4 +1,5 @@
 using UnityEngine;
+using UnityGameFramework.Runtime;
 
 namespace MainGame
 {
@@ -17,6 +18,7 @@ namespace MainGame
         private CharacterRangedAttackComponent m_RangedAttack;
         private CharacterMeleeAttackComponent m_MeleeAttack;
         private float m_RemainingSeconds;
+        private int m_StunEffectEntityId;
 
         public bool IsStunned => m_RemainingSeconds > 0f;
 
@@ -97,6 +99,10 @@ namespace MainGame
                 m_RemainingSeconds = 0f;
                 OnStunEnded();
             }
+            else
+            {
+                HideStunEffect();
+            }
 
             m_Owner = null;
             m_Animator = null;
@@ -109,6 +115,7 @@ namespace MainGame
             m_RangedAttack?.InterruptAttack();
             m_MeleeAttack?.InterruptAttack();
             HoldStunPresentation();
+            SpawnStunEffect();
 
             if (m_Animator != null)
             {
@@ -119,7 +126,39 @@ namespace MainGame
 
         private void OnStunEnded()
         {
+            HideStunEffect();
             m_Animator?.SetTrigger(StunEndHash);
+        }
+
+        private void SpawnStunEffect()
+        {
+            HideStunEffect();
+
+            if (m_Owner == null || GameEntry.Entity == null)
+            {
+                return;
+            }
+
+            m_StunEffectEntityId = GameEntry.Entity.ShowEffectAttachedAtPrefabRotation(
+                EffectEnum.角色眩晕,
+                m_Owner.Id,
+                disableAutoHide: true);
+        }
+
+        private void HideStunEffect()
+        {
+            if (m_StunEffectEntityId == 0 || GameEntry.Entity == null)
+            {
+                m_StunEffectEntityId = 0;
+                return;
+            }
+
+            if (GameEntry.Entity.HasEntity(m_StunEffectEntityId))
+            {
+                GameEntry.Entity.HideEntity(m_StunEffectEntityId);
+            }
+
+            m_StunEffectEntityId = 0;
         }
 
         private void HoldStunPresentation()

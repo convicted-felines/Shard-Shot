@@ -19,23 +19,23 @@ namespace MainGame
         private bool m_IsChangeSceneComplete = false;
         private int m_BackgroundMusicId = 0;
         private ProcedureEnum m_ProcedureId = ProcedureEnum.菜单流程;
+        private string m_TargetSceneAssetName = null;
+        private int m_PendingUnloadCount = 0;
 
         protected override void OnEnter(ProcedureOwner procedureOwner)
         {
             base.OnEnter(procedureOwner);
 
             m_IsChangeSceneComplete = false;
+            m_PendingUnloadCount = 0;
+            m_TargetSceneAssetName = null;
 
             GameEntry.Event.Subscribe(LoadSceneSuccessEventArgs.EventId, OnLoadSceneSuccess);
             GameEntry.Event.Subscribe(LoadSceneFailureEventArgs.EventId, OnLoadSceneFailure);
             GameEntry.Event.Subscribe(LoadSceneUpdateEventArgs.EventId, OnLoadSceneUpdate);
             GameEntry.Event.Subscribe(LoadSceneDependencyAssetEventArgs.EventId, OnLoadSceneDependencyAsset);
-
-            string[] loadedSceneAssetNames = GameEntry.Scene.GetLoadedSceneAssetNames();
-            for (int i = 0; i < loadedSceneAssetNames.Length; i++)
-            {
-                GameEntry.Scene.UnloadScene(loadedSceneAssetNames[i]);
-            }
+            GameEntry.Event.Subscribe(UnloadSceneSuccessEventArgs.EventId, OnUnloadSceneSuccess);
+            GameEntry.Event.Subscribe(UnloadSceneFailureEventArgs.EventId, OnUnloadSceneFailure);
 
             GameEntry.Base.ResetNormalGameSpeed();
 
@@ -49,14 +49,14 @@ namespace MainGame
                 return;
             }
 
-            if (!string.IsNullOrEmpty(overrideSceneName))
-            {
-                GameEntry.Scene.LoadScene(AssetUtility.GetSceneAsset(overrideSceneName), Constant.AssetPriority.SceneAsset, this);
-            }
-            else
+            if (string.IsNullOrEmpty(overrideSceneName))
             {
                 Log.Error("Scene name is invalid when change scene.");
+                return;
             }
+
+            m_TargetSceneAssetName = AssetUtility.GetSceneAsset(overrideSceneName);
+            UnloadLoadedScenesExceptTarget();
         }
 
         protected override void OnLeave(ProcedureOwner procedureOwner, bool isShutdown)
@@ -65,6 +65,8 @@ namespace MainGame
             GameEntry.Event.Unsubscribe(LoadSceneFailureEventArgs.EventId, OnLoadSceneFailure);
             GameEntry.Event.Unsubscribe(LoadSceneUpdateEventArgs.EventId, OnLoadSceneUpdate);
             GameEntry.Event.Unsubscribe(LoadSceneDependencyAssetEventArgs.EventId, OnLoadSceneDependencyAsset);
+            GameEntry.Event.Unsubscribe(UnloadSceneSuccessEventArgs.EventId, OnUnloadSceneSuccess);
+            GameEntry.Event.Unsubscribe(UnloadSceneFailureEventArgs.EventId, OnUnloadSceneFailure);
 
             base.OnLeave(procedureOwner, isShutdown);
         }
@@ -130,6 +132,81 @@ namespace MainGame
             }
 
             Log.Info("Load scene '{0}' dependency asset '{1}', count '{2}/{3}'.", ne.SceneAssetName, ne.DependencyAssetName, ne.LoadedCount.ToString(), ne.TotalCount.ToString());
+        }
+
+        private void UnloadLoadedScenesExceptTarget()
+        {
+            string[] loadedSceneAssetNames = GameEntry.Scene.GetLoadedSceneAssetNames();
+            for (int i = 0; i < loadedSceneAssetNames.Length; i++)
+            {
+                string loadedSceneAssetName = loadedSceneAssetNames[i];
+                if (loadedSceneAssetName == m_TargetSceneAssetName)
+                {
+                    continue;
+                }
+
+                m_PendingUnloadCount++;
+                GameEntry.Scene.UnloadScene(loadedSceneAssetName, this);
+            }
+
+            if (m_PendingUnloadCount == 0)
+            {
+                TryLoadTargetScene();
+            }
+        }
+
+        private void TryLoadTargetScene()
+        {
+            if (m_IsChangeSceneComplete || string.IsNullOrEmpty(m_TargetSceneAssetName))
+            {
+                return;
+            }
+
+            if (GameEntry.Scene.SceneIsLoaded(m_TargetSceneAssetName))
+            {
+                m_IsChangeSceneComplete = true;
+                return;
+            }
+
+            if (GameEntry.Scene.SceneIsLoading(m_TargetSceneAssetName))
+            {
+                return;
+            }
+
+            GameEntry.Scene.LoadScene(m_TargetSceneAssetName, Constant.AssetPriority.SceneAsset, this);
+        }
+
+        private void OnUnloadSceneSuccess(object sender, GameEventArgs e)
+        {
+            UnloadSceneSuccessEventArgs ne = (UnloadSceneSuccessEventArgs)e;
+            if (ne.UserData != this)
+            {
+                return;
+            }
+
+            m_PendingUnloadCount--;
+            if (m_PendingUnloadCount <= 0)
+            {
+                m_PendingUnloadCount = 0;
+                TryLoadTargetScene();
+            }
+        }
+
+        private void OnUnloadSceneFailure(object sender, GameEventArgs e)
+        {
+            UnloadSceneFailureEventArgs ne = (UnloadSceneFailureEventArgs)e;
+            if (ne.UserData != this)
+            {
+                return;
+            }
+
+            Log.Error("Unload scene '{0}' failure.", ne.SceneAssetName);
+            m_PendingUnloadCount--;
+            if (m_PendingUnloadCount <= 0)
+            {
+                m_PendingUnloadCount = 0;
+                TryLoadTargetScene();
+            }
         }
     }
 }

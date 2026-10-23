@@ -43,10 +43,10 @@ namespace EpicToonFX
         {
             if(target)
             {
-                if (Input.GetMouseButton(1))
+                if (ETFXInput.GetMouseButton(1))
                 {
-                    velocityX += xSpeed * Input.GetAxis("Mouse X") * distance * 0.02f;
-                    velocityY += ySpeed * Input.GetAxis("Mouse Y") * 0.02f;
+                    velocityX += xSpeed * ETFXInput.GetAxis("Mouse X") * distance * 0.02f;
+                    velocityY += ySpeed * ETFXInput.GetAxis("Mouse Y") * 0.02f;
 
                     if (isAutoRotating)
                     {
@@ -54,7 +54,7 @@ namespace EpicToonFX
                     }
                 }
 
-                distance = Mathf.Clamp(distance - Input.GetAxis("Mouse ScrollWheel") * 15, distanceMin, distanceMax);
+                distance = Mathf.Clamp(distance - ETFXInput.GetAxis("Mouse ScrollWheel") * 15, distanceMin, distanceMax);
             }
         }
 

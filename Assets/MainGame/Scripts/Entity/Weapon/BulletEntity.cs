@@ -118,6 +118,8 @@ namespace MainGame
                 m_BulletData.KnockbackForce,
                 CachedTransform.position))
             {
+                PlayHitEffect();
+
                 if (m_BulletData.Kind == BulletKind.Lead)
                 {
                     SpawnScatterBullets(other);
@@ -166,8 +168,19 @@ namespace MainGame
                     stunDuration: m_BulletData.ScatterStunDuration,
                     kind: BulletKind.Scatter);
                 scatterData.IgnoreCharacterEntityId = ignoreEntityId;
+                scatterData.HitEffect = m_BulletData.HitEffect;
                 GameEntry.Entity.ShowBullet(scatterData);
             }
+        }
+
+        private void PlayHitEffect()
+        {
+            if (m_BulletData == null || m_BulletData.HitEffect == EffectEnum.Unknown)
+            {
+                return;
+            }
+
+            GameEntry.Juice?.PlayEffect(m_BulletData.HitEffect, CachedTransform.position);
         }
 
         private static int ResolveCharacterEntityId(Collider collider)

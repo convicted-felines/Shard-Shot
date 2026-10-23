@@ -97,6 +97,16 @@ namespace MainGame
             m_CurrentAttackSpeed = WeaponConfig != null ? WeaponConfig.AttackSpeed : 0f;
         }
 
+        protected override void OnBulletSpawned(BulletData data)
+        {
+            if (data == null)
+            {
+                return;
+            }
+
+            GameEntry.Juice?.PlayEffect(EffectEnum.加特林开火, data.Position, data.Rotation);
+        }
+
         protected override BulletData CreateBulletData(Vector3 direction, Quaternion rotation, Transform muzzle)
         {
             if (ShouldSpawnLeadBullet())
@@ -115,6 +125,7 @@ namespace MainGame
                     BulletKind.Lead);
                 ConfigureLeadScatter(leadData);
                 leadData.KnockbackForce = m_KnockbackForce * m_LeadKnockbackMultiplier;
+                ApplyGatlingHitEffect(leadData);
                 return leadData;
             }
 
@@ -122,9 +133,18 @@ namespace MainGame
             if (data != null)
             {
                 data.KnockbackForce = m_KnockbackForce;
+                ApplyGatlingHitEffect(data);
             }
 
             return data;
+        }
+
+        private static void ApplyGatlingHitEffect(BulletData data)
+        {
+            if (data != null)
+            {
+                data.HitEffect = EffectEnum.加特林击中;
+            }
         }
 
         private bool ShouldSpawnLeadBullet()

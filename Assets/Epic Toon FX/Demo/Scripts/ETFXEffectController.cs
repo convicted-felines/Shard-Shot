@@ -46,12 +46,12 @@ namespace EpicToonFX
 
         void Update()
         {
-            if (Input.GetKeyDown(KeyCode.RightArrow) || Input.GetKeyDown(KeyCode.D))
+            if (ETFXInput.GetKeyDown(KeyCode.RightArrow) || ETFXInput.GetKeyDown(KeyCode.D))
             {
                 NextEffect();
             }
 
-            if (Input.GetKeyDown(KeyCode.A) || Input.GetKeyDown(KeyCode.LeftArrow))
+            if (ETFXInput.GetKeyDown(KeyCode.A) || ETFXInput.GetKeyDown(KeyCode.LeftArrow))
             {
                 PreviousEffect();
             }

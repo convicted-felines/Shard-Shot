@@ -32,12 +32,19 @@ namespace MainGame
             private set;
         }
 
+        public static JuiceComponent Juice
+        {
+            get;
+            private set;
+        }
+
         private static void InitCustomComponents()
         {
             BuiltinData = UnityGameFramework.Runtime.GameEntry.GetComponent<BuiltinDataComponent>();
             Control = UnityGameFramework.Runtime.GameEntry.GetComponent<ControlComponent>();
             Platform = UnityGameFramework.Runtime.GameEntry.GetComponent<PlatformComponent>();
             ProgressObserver = UnityGameFramework.Runtime.GameEntry.GetComponent<ProgressObserverComponent>();
+            Juice = UnityGameFramework.Runtime.GameEntry.GetComponent<JuiceComponent>();
         }
     }
 }

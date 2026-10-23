@@ -84,6 +84,11 @@ namespace MainGame
             return Utility.Text.Format("Assets/MainGame/Entities/WorldUI/{0}.prefab", assetName);
         }
 
+        public static string GetEffectAsset(string assetName)
+        {
+            return Utility.Text.Format("Assets/MainGame/Entities/Effect/{0}.prefab", assetName);
+        }
+
         public static string GetEmptyEntity()
         {
             return "Assets/MainGame/Entities/Other/EmptyEntity.prefab";
