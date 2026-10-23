@@ -9,7 +9,7 @@ namespace MainGame
     public class RangedWeaponEntity : WeaponEntity
     {
         [SerializeField]
-        private Transform m_Muzzle;
+        private Transform[] m_Muzzles;
 
         [SerializeField]
         private Transform m_ShellEjectPoint;
@@ -22,12 +22,12 @@ namespace MainGame
         [Tooltip("枪口不可用时，相对角色正前方的默认出弹距离。")]
         private float m_DefaultForwardDistance = 0.8f;
 
-        public Transform Muzzle => m_Muzzle;
+        public Transform[] Muzzles => m_Muzzles;
 
         public Transform ShellEjectPoint => m_ShellEjectPoint;
 
         /// <summary>
-        /// 沿角色水平前方发射子弹；高度使用角色逻辑开火高度，不受动画枪口下沉影响。
+        /// 沿角色水平前方发射子弹；每个枪口各发射一颗，高度使用角色逻辑开火高度，不受动画枪口下沉影响。
         /// </summary>
         public void FireBullet()
         {
@@ -36,11 +36,71 @@ namespace MainGame
                 return;
             }
 
-            Vector3 direction = GetOwnerPlanarForward();
-            Vector3 spawnPosition = GetBulletSpawnPosition(direction);
-            Quaternion rotation = Quaternion.LookRotation(direction, Vector3.up);
+            Vector3 baseDirection = GetOwnerPlanarForward();
 
-            BulletData data = BulletData.Create(
+            if (m_Muzzles == null || m_Muzzles.Length == 0)
+            {
+                FireFromMuzzle(baseDirection, null);
+                return;
+            }
+
+            bool hasValidMuzzle = false;
+            for (int i = 0; i < m_Muzzles.Length; i++)
+            {
+                Transform muzzle = m_Muzzles[i];
+                if (muzzle == null)
+                {
+                    continue;
+                }
+
+                hasValidMuzzle = true;
+                FireFromMuzzle(baseDirection, muzzle);
+            }
+
+            if (!hasValidMuzzle)
+            {
+                FireFromMuzzle(baseDirection, null);
+            }
+        }
+
+        /// <summary>
+        /// 子类可覆写，为每发子弹施加方向扰动（如加特林叠射速散布）。
+        /// </summary>
+        protected virtual Vector3 ApplySpawnDirectionVariation(Vector3 baseDirection)
+        {
+            return baseDirection;
+        }
+
+        private void FireFromMuzzle(Vector3 baseDirection, Transform muzzle)
+        {
+            Vector3 direction = ApplySpawnDirectionVariation(baseDirection);
+            Quaternion rotation = Quaternion.LookRotation(direction, Vector3.up);
+            SpawnBullet(direction, rotation, muzzle);
+        }
+
+        private void SpawnBullet(Vector3 direction, Quaternion rotation, Transform muzzle)
+        {
+            BulletData data = CreateBulletData(direction, rotation, muzzle);
+            if (data == null)
+            {
+                return;
+            }
+
+            GameEntry.Entity.ShowBullet(data);
+        }
+
+        /// <summary>
+        /// 子类可覆写以改变单发子弹参数（如加特林铅弹概率）。
+        /// </summary>
+        protected virtual BulletData CreateBulletData(Vector3 direction, Quaternion rotation, Transform muzzle)
+        {
+            if (Owner == null || WeaponConfig == null)
+            {
+                return null;
+            }
+
+            Vector3 spawnPosition = GetBulletSpawnPosition(direction, muzzle);
+            return BulletData.Create(
                 WeaponConfig.BulletAssetName,
                 Owner.Id,
                 spawnPosition,
@@ -49,8 +109,6 @@ namespace MainGame
                 WeaponConfig.Damage,
                 WeaponConfig.BulletSpeed,
                 WeaponConfig.DamageCountdown);
-
-            GameEntry.Entity.ShowBullet(data);
         }
 
         /// <summary>
@@ -70,25 +128,22 @@ namespace MainGame
             return forward.normalized;
         }
 
-        private Vector3 GetBulletSpawnPosition(Vector3 planarForward)
+        protected Vector3 GetBulletSpawnPosition(Vector3 planarForward, Transform muzzle)
         {
             Vector3 ownerPosition = Owner.CachedTransform.position;
-            float forwardDistance = m_DefaultForwardDistance;
 
-            if (m_Muzzle != null)
+            if (muzzle != null)
             {
-                // 仅取枪口水平前向距离；Y / 侧向由动画驱动，不用于出弹点。
-                Vector3 toMuzzle = m_Muzzle.position - ownerPosition;
-                Vector3 planarToMuzzle = new Vector3(toMuzzle.x, 0f, toMuzzle.z);
-                float projected = Vector3.Dot(planarToMuzzle, planarForward);
-                forwardDistance = projected >= 0.2f
-                    ? projected
-                    : Mathf.Max(planarToMuzzle.magnitude, m_DefaultForwardDistance);
+                // 取枪口水平偏移（双管等多枪口时保留侧向间距）；Y 使用逻辑开火高度。
+                Vector3 toMuzzle = muzzle.position - ownerPosition;
+                Vector3 muzzleSpawnPosition = ownerPosition + new Vector3(toMuzzle.x, 0f, toMuzzle.z);
+                muzzleSpawnPosition.y = ownerPosition.y + m_FireHeight;
+                return muzzleSpawnPosition;
             }
 
-            Vector3 spawnPosition = ownerPosition + planarForward * forwardDistance;
-            spawnPosition.y = ownerPosition.y + m_FireHeight;
-            return spawnPosition;
+            Vector3 defaultSpawnPosition = ownerPosition + planarForward * m_DefaultForwardDistance;
+            defaultSpawnPosition.y = ownerPosition.y + m_FireHeight;
+            return defaultSpawnPosition;
         }
     }
 }

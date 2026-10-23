@@ -35,6 +35,7 @@ namespace MainGame
             switch ((WeaponEnum)weaponId)
             {
                 case WeaponEnum.加特林:
+                    return typeof(GatlingWeaponEntity);
                 case WeaponEnum.榴弹炮:
                     return typeof(RangedWeaponEntity);
             }

@@ -12,6 +12,8 @@ namespace MainGame
         private CharacterWeaponComponent m_WeaponComponent;
         private CharacterRangedAttackComponent m_RangedAttack;
         private CharacterMeleeAttackComponent m_MeleeAttack;
+        private CharacterStunComponent m_StunComponent;
+        private MonsterMovementComponent m_MovementComponent;
 
         public bool IsAttacking => IsMeleeWeapon()
             ? m_MeleeAttack != null && m_MeleeAttack.IsAttacking
@@ -21,17 +23,25 @@ namespace MainGame
             CharacterEntity owner,
             CharacterWeaponComponent weaponComponent,
             CharacterRangedAttackComponent rangedAttack,
-            CharacterMeleeAttackComponent meleeAttack)
+            CharacterMeleeAttackComponent meleeAttack,
+            MonsterMovementComponent movementComponent)
         {
             m_Owner = owner;
             m_WeaponComponent = weaponComponent;
             m_RangedAttack = rangedAttack;
             m_MeleeAttack = meleeAttack;
+            m_MovementComponent = movementComponent;
+            m_StunComponent = owner != null ? owner.GetComponent<CharacterStunComponent>() : null;
         }
 
         public void Tick(float elapseSeconds)
         {
             if (m_Owner == null || m_Owner.CharacterConfig == null)
+            {
+                return;
+            }
+
+            if (m_StunComponent != null && m_StunComponent.IsStunned)
             {
                 return;
             }
@@ -43,6 +53,7 @@ namespace MainGame
                 out CharacterEntity target);
 
             CharacterEntity facingTarget = hasTarget ? target : null;
+            bool interruptAttack = m_MovementComponent != null && m_MovementComponent.IsMoving;
             if (IsMeleeWeapon())
             {
                 if (m_MeleeAttack == null)
@@ -53,7 +64,7 @@ namespace MainGame
                 m_MeleeAttack.Tick(
                     elapseSeconds,
                     wantsAttack: hasTarget,
-                    interruptAttack: false,
+                    interruptAttack: interruptAttack,
                     facingTarget: facingTarget);
             }
             else
@@ -66,7 +77,7 @@ namespace MainGame
                 m_RangedAttack.Tick(
                     elapseSeconds,
                     wantsAttack: hasTarget,
-                    interruptAttack: false,
+                    interruptAttack: interruptAttack,
                     facingTarget: facingTarget);
             }
 
@@ -94,6 +105,8 @@ namespace MainGame
             m_WeaponComponent = null;
             m_RangedAttack = null;
             m_MeleeAttack = null;
+            m_StunComponent = null;
+            m_MovementComponent = null;
         }
     }
 }

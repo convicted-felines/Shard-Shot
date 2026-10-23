@@ -17,6 +17,7 @@ namespace MainGame
         private CharacterMeleeAttackComponent m_MeleeAttackComponent;
         private MonsterCombatComponent m_CombatComponent;
         private MonsterMovementComponent m_MovementComponent;
+        private CharacterStunComponent m_StunComponent;
 
         public override CharacterFaction Faction => CharacterFaction.Enemy;
 
@@ -50,6 +51,12 @@ namespace MainGame
             m_MeleeAttackComponent = null;
             m_CombatComponent = null;
             m_MovementComponent = null;
+            if (m_StunComponent != null)
+            {
+                m_StunComponent.Clear();
+                m_StunComponent = null;
+            }
+
             ClearHealthState();
             base.OnHide(isShutdown, userData);
         }
@@ -57,6 +64,12 @@ namespace MainGame
         protected override void OnUpdate(float elapseSeconds, float realElapseSeconds)
         {
             base.OnUpdate(elapseSeconds, realElapseSeconds);
+            m_StunComponent?.Tick(elapseSeconds);
+            if (m_StunComponent != null && m_StunComponent.IsStunned)
+            {
+                return;
+            }
+
             m_MovementComponent?.Tick(elapseSeconds);
             m_CombatComponent?.Tick(elapseSeconds);
         }
@@ -77,6 +90,7 @@ namespace MainGame
         private void SetupCombat()
         {
             m_Animator = GetComponentInChildren<Animator>();
+            m_StunComponent = CharacterStunComponent.Ensure(this, m_Animator);
 
             m_WeaponComponent = GetComponent<CharacterWeaponComponent>();
             if (m_WeaponComponent == null)
@@ -102,19 +116,24 @@ namespace MainGame
 
             m_MeleeAttackComponent.Initialize(this, m_WeaponComponent, m_Animator);
 
+            m_MovementComponent = GetComponent<MonsterMovementComponent>();
+            if (m_MovementComponent == null)
+            {
+                m_MovementComponent = gameObject.AddComponent<MonsterMovementComponent>();
+            }
+
             m_CombatComponent = GetComponent<MonsterCombatComponent>();
             if (m_CombatComponent == null)
             {
                 m_CombatComponent = gameObject.AddComponent<MonsterCombatComponent>();
             }
 
-            m_CombatComponent.Initialize(this, m_WeaponComponent, m_RangedAttackComponent, m_MeleeAttackComponent);
-
-            m_MovementComponent = GetComponent<MonsterMovementComponent>();
-            if (m_MovementComponent == null)
-            {
-                m_MovementComponent = gameObject.AddComponent<MonsterMovementComponent>();
-            }
+            m_CombatComponent.Initialize(
+                this,
+                m_WeaponComponent,
+                m_RangedAttackComponent,
+                m_MeleeAttackComponent,
+                m_MovementComponent);
 
             m_MovementComponent.Initialize(this, m_CombatComponent, m_Animator);
         }

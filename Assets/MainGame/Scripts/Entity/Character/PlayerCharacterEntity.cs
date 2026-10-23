@@ -15,6 +15,7 @@ namespace MainGame
         private CharacterWeaponComponent m_WeaponComponent;
         private CharacterCombatComponent m_CombatComponent;
         private PlayerKnockdownComponent m_KnockdownComponent;
+        private CharacterStunComponent m_StunComponent;
 
         private float m_CurrentHealth;
         private bool m_IsAlive;
@@ -30,6 +31,8 @@ namespace MainGame
         public bool IsKnockedDown => m_KnockdownComponent != null && m_KnockdownComponent.IsKnockedDown;
 
         public bool IsInvincible => m_KnockdownComponent != null && m_KnockdownComponent.IsInvincible;
+
+        public bool IsStunned => m_StunComponent != null && m_StunComponent.IsStunned;
 
         public Animator Animator => m_Animator;
 
@@ -84,6 +87,7 @@ namespace MainGame
             }
 
             m_KnockdownComponent.Initialize(this);
+            m_StunComponent = CharacterStunComponent.Ensure(this, m_Animator);
 
             if (Rigidbody == null)
             {
@@ -99,6 +103,12 @@ namespace MainGame
             {
                 m_KnockdownComponent.Clear();
                 m_KnockdownComponent = null;
+            }
+
+            if (m_StunComponent != null)
+            {
+                m_StunComponent.Clear();
+                m_StunComponent = null;
             }
 
             if (m_WeaponComponent != null)
@@ -125,6 +135,12 @@ namespace MainGame
 
             m_KnockdownComponent?.Tick(elapseSeconds);
             if (IsKnockedDown)
+            {
+                return;
+            }
+
+            m_StunComponent?.Tick(elapseSeconds);
+            if (IsStunned)
             {
                 return;
             }

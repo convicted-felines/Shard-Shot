@@ -12,12 +12,25 @@ namespace MainGame
         /// </summary>
         public static float GetAttackInterval(DRWeapon weapon)
         {
-            if (weapon == null || weapon.AttackSpeed <= 0f)
+            if (weapon == null)
             {
                 return float.MaxValue;
             }
 
-            return weapon.BaseAttackSpeed / weapon.AttackSpeed;
+            return GetAttackInterval(weapon, weapon.AttackSpeed);
+        }
+
+        /// <summary>
+        /// 攻击间隔 = 基础攻击速度 / 指定攻击速度（加特林叠射速等动态攻速）。
+        /// </summary>
+        public static float GetAttackInterval(DRWeapon weapon, float attackSpeed)
+        {
+            if (weapon == null || attackSpeed <= 0f)
+            {
+                return float.MaxValue;
+            }
+
+            return weapon.BaseAttackSpeed / attackSpeed;
         }
 
         /// <summary>
@@ -30,7 +43,20 @@ namespace MainGame
                 return float.MaxValue;
             }
 
-            return GetAttackInterval(weapon) * Mathf.Clamp01(weapon.AttackTiming);
+            return GetAttackFireDelay(weapon, weapon.AttackSpeed);
+        }
+
+        /// <summary>
+        /// 攻击开始后，到实际产生攻击行为（如发射子弹）的延迟。
+        /// </summary>
+        public static float GetAttackFireDelay(DRWeapon weapon, float attackSpeed)
+        {
+            if (weapon == null)
+            {
+                return float.MaxValue;
+            }
+
+            return GetAttackInterval(weapon, attackSpeed) * Mathf.Clamp01(weapon.AttackTiming);
         }
     }
 }

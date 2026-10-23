@@ -730,7 +730,7 @@ PrefabInstance:
     - target: {fileID: 5260654791754745306, guid: 419c7e1a3a27841debb0a95b47d38bd3,
         type: 3}
       propertyPath: m_EntityGroups.Array.data[2].m_InstanceCapacity
-      value: 32
+      value: 64
       objectReference: {fileID: 0}
     - target: {fileID: 5260654791754745306, guid: 419c7e1a3a27841debb0a95b47d38bd3,
         type: 3}

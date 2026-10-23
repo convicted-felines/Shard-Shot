@@ -24,6 +24,11 @@ namespace MainGame
 
         public bool IsAttacking => m_IsAttacking;
 
+        public void InterruptAttack()
+        {
+            ResetAttackState();
+        }
+
         public void Initialize(CharacterEntity owner, CharacterWeaponComponent weaponComponent, Animator animator)
         {
             m_Owner = owner;
@@ -62,7 +67,7 @@ namespace MainGame
                     return;
                 }
 
-                BeginAttackCycle(weaponConfig);
+                BeginAttackCycle(rangedWeapon, weaponConfig);
                 if (!m_IsAttacking)
                 {
                     return;
@@ -70,6 +75,7 @@ namespace MainGame
             }
 
             UpdateFacing(facingTarget, elapseSeconds);
+            TickGatlingRamp(rangedWeapon, elapseSeconds, wantsAttack, interruptAttack);
 
             m_AttackElapsed += elapseSeconds;
             if (!m_HasFiredThisCycle && m_AttackElapsed >= m_AttackFireDelay)
@@ -85,7 +91,7 @@ namespace MainGame
 
             if (wantsAttack)
             {
-                BeginAttackCycle(weaponConfig);
+                BeginAttackCycle(rangedWeapon, weaponConfig);
             }
             else
             {
@@ -93,10 +99,11 @@ namespace MainGame
             }
         }
 
-        private void BeginAttackCycle(DRWeapon weaponConfig)
+        private void BeginAttackCycle(RangedWeaponEntity rangedWeapon, DRWeapon weaponConfig)
         {
-            m_AttackInterval = WeaponCombatUtility.GetAttackInterval(weaponConfig);
-            m_AttackFireDelay = WeaponCombatUtility.GetAttackFireDelay(weaponConfig);
+            float attackSpeed = GetEffectiveAttackSpeed(rangedWeapon, weaponConfig);
+            m_AttackInterval = WeaponCombatUtility.GetAttackInterval(weaponConfig, attackSpeed);
+            m_AttackFireDelay = WeaponCombatUtility.GetAttackFireDelay(weaponConfig, attackSpeed);
             if (m_AttackInterval <= 0f || float.IsInfinity(m_AttackInterval))
             {
                 return;
@@ -124,6 +131,41 @@ namespace MainGame
             }
         }
 
+        private static float GetEffectiveAttackSpeed(RangedWeaponEntity rangedWeapon, DRWeapon weaponConfig)
+        {
+            if (rangedWeapon is GatlingWeaponEntity gatling)
+            {
+                float speed = gatling.GetEffectiveAttackSpeed();
+                if (speed > 0f)
+                {
+                    return speed;
+                }
+            }
+
+            return weaponConfig.AttackSpeed;
+        }
+
+        private void TickGatlingRamp(
+            RangedWeaponEntity rangedWeapon,
+            float elapseSeconds,
+            bool wantsAttack,
+            bool interruptAttack)
+        {
+            if (rangedWeapon is GatlingWeaponEntity gatling)
+            {
+                bool isStationaryAttacking = m_IsAttacking && wantsAttack && !interruptAttack;
+                gatling.TickRamp(elapseSeconds, isStationaryAttacking);
+            }
+        }
+
+        private void ResetGatlingRamp()
+        {
+            if (m_WeaponComponent?.CurrentWeaponEntity is GatlingWeaponEntity gatling)
+            {
+                gatling.ResetRamp();
+            }
+        }
+
         private void UpdateFacing(CharacterEntity facingTarget, float elapseSeconds)
         {
             if (facingTarget == null || m_Owner.CharacterConfig == null)
@@ -140,6 +182,8 @@ namespace MainGame
 
         private void ResetAttackState()
         {
+            ResetGatlingRamp();
+
             bool wasAttacking = m_IsAttacking;
             m_IsAttacking = false;
             m_HasFiredThisCycle = false;

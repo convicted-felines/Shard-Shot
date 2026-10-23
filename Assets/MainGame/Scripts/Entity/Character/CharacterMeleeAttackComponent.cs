@@ -25,6 +25,11 @@ namespace MainGame
 
         public bool IsAttacking => m_IsAttacking;
 
+        public void InterruptAttack()
+        {
+            ResetAttackState();
+        }
+
         public void Initialize(CharacterEntity owner, CharacterWeaponComponent weaponComponent, Animator animator)
         {
             m_Owner = owner;

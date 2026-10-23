@@ -22,7 +22,7 @@ namespace MainGame
 
         private CharacterRangedAttackComponent m_RangedAttack;
 
-
+        private CharacterStunComponent m_StunComponent;
 
         public bool IsAttacking => m_RangedAttack != null && m_RangedAttack.IsAttacking;
 
@@ -49,24 +49,20 @@ namespace MainGame
 
 
             m_RangedAttack.Initialize(owner, weaponComponent, animator);
-
+            m_StunComponent = owner.GetComponent<CharacterStunComponent>();
         }
 
-
-
         public void Tick(float elapseSeconds)
-
         {
-
             if (m_Owner == null || m_RangedAttack == null || GameEntry.Control == null)
-
             {
-
                 return;
-
             }
 
-
+            if (m_StunComponent != null && m_StunComponent.IsStunned)
+            {
+                return;
+            }
 
             bool interruptAttack = IsMoveInputActive();
 
@@ -120,9 +116,8 @@ namespace MainGame
         {
 
             m_Owner = null;
-
             m_RangedAttack = null;
-
+            m_StunComponent = null;
         }
 
     }

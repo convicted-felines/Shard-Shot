@@ -8,17 +8,23 @@ namespace MainGame
     [DisallowMultipleComponent]
     public sealed class MonsterMovementComponent : MonoBehaviour
     {
+        private const float MovingSpeedThreshold = 0.15f;
+
         private static readonly int SpeedParamHash = Animator.StringToHash("Speed");
 
         private DamageableCharacterEntity m_Owner;
         private MonsterCombatComponent m_CombatComponent;
+        private CharacterStunComponent m_StunComponent;
         private Animator m_Animator;
         private float m_AnimatorSpeed;
+
+        public bool IsMoving { get; private set; }
 
         public void Initialize(DamageableCharacterEntity owner, MonsterCombatComponent combatComponent, Animator animator)
         {
             m_Owner = owner;
             m_CombatComponent = combatComponent;
+            m_StunComponent = owner != null ? owner.GetComponent<CharacterStunComponent>() : null;
             m_Animator = animator;
             m_AnimatorSpeed = 0f;
         }
@@ -30,6 +36,13 @@ namespace MainGame
                 || m_Owner.CharacterConfig == null
                 || m_Owner.Rigidbody == null)
             {
+                IsMoving = false;
+                return;
+            }
+
+            if (m_StunComponent != null && m_StunComponent.IsStunned)
+            {
+                IsMoving = false;
                 return;
             }
 
@@ -39,6 +52,7 @@ namespace MainGame
             {
                 CharacterRigidbodyUtility.StopPlanarMovement(rigidbody);
                 UpdateAnimator(elapseSeconds);
+                IsMoving = false;
                 return;
             }
 
@@ -46,6 +60,7 @@ namespace MainGame
             {
                 CharacterRigidbodyUtility.StopPlanarMovement(rigidbody);
                 UpdateAnimator(elapseSeconds);
+                IsMoving = false;
                 return;
             }
 
@@ -65,6 +80,7 @@ namespace MainGame
                     m_Owner.CharacterConfig.TurnSpeed,
                     elapseSeconds);
                 UpdateAnimator(elapseSeconds);
+                IsMoving = false;
                 return;
             }
 
@@ -78,6 +94,18 @@ namespace MainGame
                 m_Owner.CharacterConfig.TurnSpeed,
                 elapseSeconds);
             UpdateAnimator(elapseSeconds);
+            UpdateMovingState();
+        }
+
+        private void UpdateMovingState()
+        {
+            if (m_Owner == null || m_Owner.Rigidbody == null)
+            {
+                IsMoving = false;
+                return;
+            }
+
+            IsMoving = CharacterRigidbodyUtility.GetPlanarSpeed(m_Owner.Rigidbody) > MovingSpeedThreshold;
         }
 
         private void UpdateAnimator(float elapseSeconds)
@@ -98,6 +126,7 @@ namespace MainGame
         {
             m_Owner = null;
             m_CombatComponent = null;
+            m_StunComponent = null;
             m_Animator = null;
         }
     }
