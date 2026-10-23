@@ -5,7 +5,7 @@ using UnityGameFramework.Runtime;
 namespace MainGame
 {
     /// <summary>
-    /// 榴弹实体：刚体飞行、碰撞弹跳，引信结束后爆炸并对范围内目标造成伤害。
+    /// 榴弹实体：刚体飞行、碰撞弹跳，引信结束后爆炸并对范围内敌对角色造成伤害与击飞布偶效果。
     /// </summary>
     public sealed class GrenadeBulletEntity : Entity
     {
@@ -16,7 +16,14 @@ namespace MainGame
         private float m_ExplosionRadius = 2.5f;
 
         [SerializeField]
+        private float m_ExplosionScatterForce = 12f;
+
+        [SerializeField]
         private float m_MaxLifetime = 15f;
+
+        [SerializeField]
+        [Tooltip("引信时间随机偏移上限（秒），实际爆炸时间为 DamageCountdown ± 该值")]
+        private float m_ExplodeDelayRandomOffset = 0.3f;
 
         private static readonly List<UnityGameFramework.Runtime.Entity> s_EntityBuffer =
             new List<UnityGameFramework.Runtime.Entity>(32);
@@ -26,6 +33,7 @@ namespace MainGame
         private Collider m_Collider;
         private float m_ElapsedLifetime;
         private float m_FuseElapsed;
+        private float m_ActualExplodeDelay;
         private bool m_HasExploded;
 
         protected override void OnShow(object userData)
@@ -77,6 +85,7 @@ namespace MainGame
             IgnoreOwnerCollisions();
             m_ElapsedLifetime = 0f;
             m_FuseElapsed = 0f;
+            m_ActualExplodeDelay = ResolveExplodeDelay(m_BulletData.ExplodeDelay);
             m_HasExploded = false;
         }
 
@@ -93,6 +102,7 @@ namespace MainGame
             m_Collider = null;
             m_ElapsedLifetime = 0f;
             m_FuseElapsed = 0f;
+            m_ActualExplodeDelay = 0f;
             m_HasExploded = false;
             base.OnHide(isShutdown, userData);
         }
@@ -114,10 +124,26 @@ namespace MainGame
             }
 
             m_FuseElapsed += elapseSeconds;
-            if (m_FuseElapsed >= m_BulletData.ExplodeDelay)
+            if (m_FuseElapsed >= m_ActualExplodeDelay)
             {
                 Explode();
             }
+        }
+
+        private float ResolveExplodeDelay(float baseDelay)
+        {
+            if (baseDelay <= 0f)
+            {
+                return 0f;
+            }
+
+            if (m_ExplodeDelayRandomOffset <= 0f)
+            {
+                return baseDelay;
+            }
+
+            float offset = Random.Range(-m_ExplodeDelayRandomOffset, m_ExplodeDelayRandomOffset);
+            return Mathf.Max(0.1f, baseDelay + offset);
         }
 
         private void Explode()
@@ -128,11 +154,11 @@ namespace MainGame
             }
 
             m_HasExploded = true;
-            ApplyExplosionDamage();
+            ApplyExplosionEffects();
             GameEntry.Entity.HideEntity(this);
         }
 
-        private void ApplyExplosionDamage()
+        private void ApplyExplosionEffects()
         {
             if (m_BulletData == null || m_BulletData.Damage <= 0f || m_ExplosionRadius <= 0f)
             {
@@ -141,6 +167,12 @@ namespace MainGame
 
             Vector3 center = CachedTransform.position;
             float radiusSqr = m_ExplosionRadius * m_ExplosionRadius;
+            float scatterForce = m_ExplosionScatterForce > 0f ? m_ExplosionScatterForce : 12f;
+
+            CharacterEntity owner = m_BulletData.OwnerEntityId != 0
+                ? GameEntry.Entity.GetGameEntity(m_BulletData.OwnerEntityId) as CharacterEntity
+                : null;
+            CharacterFaction ownerFaction = owner != null ? owner.Faction : CharacterFaction.Player;
 
             s_EntityBuffer.Clear();
             GameEntry.Entity.GetAllLoadedEntities(s_EntityBuffer);
@@ -154,13 +186,7 @@ namespace MainGame
                 }
 
                 CharacterEntity character = ugfEntity.Logic as CharacterEntity;
-                if (character == null)
-                {
-                    continue;
-                }
-
-                IDamageable damageable = character as IDamageable;
-                if (damageable == null || !damageable.IsAlive)
+                if (character == null || !CharacterFactionUtility.IsHostile(ownerFaction, character.Faction))
                 {
                     continue;
                 }
@@ -172,7 +198,16 @@ namespace MainGame
                     continue;
                 }
 
-                damageable.TakeDamage(m_BulletData.Damage, m_BulletData.OwnerEntityId);
+                if (character is MonsterCharacterEntity monster)
+                {
+                    monster.ApplyExplosionHit(m_BulletData.Damage, m_BulletData.OwnerEntityId, center, scatterForce);
+                    continue;
+                }
+
+                if (character is IDamageable damageable && damageable.IsAlive)
+                {
+                    damageable.TakeDamage(m_BulletData.Damage, m_BulletData.OwnerEntityId);
+                }
             }
         }
 

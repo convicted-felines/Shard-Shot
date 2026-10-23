@@ -174,6 +174,12 @@ namespace MainGame
                 return 0;
             }
 
+            RagdollOwnerDamageProxy ragdollProxy = collider.GetComponent<RagdollOwnerDamageProxy>();
+            if (ragdollProxy != null)
+            {
+                return ragdollProxy.OwnerEntityId;
+            }
+
             CharacterDamageReceiver receiver = collider.GetComponent<CharacterDamageReceiver>();
             return receiver != null ? receiver.GetCharacterEntityId() : 0;
         }

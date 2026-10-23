@@ -160,7 +160,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   m_RagBoneRoot: {fileID: 796885682875071009}
-  m_DetachLimbsOnDeath: 0
+  m_DetachLimbsOnDeath: 1
   m_DeathRagdollHideDelay: 3
   m_DeathScatterForce: 12
   m_KnockdownRecoverDelay: 1.5

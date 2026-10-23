@@ -106,11 +106,10 @@ namespace MainGame
             m_CurrentWeaponId = 0;
         }
 
-        /// <summary>击飞时将当前武器挂到布偶手部挂点（布偶预制体上的 CharacterPrefabConfig）。</summary>
+        /// <summary>击飞时将当前武器挂到布偶手部挂点（优先布偶 Config，否则按角色挂点同名骨骼查找）。</summary>
         public bool TryTransferWeaponToRagdoll(RagdollEntity ragdoll)
         {
-            if (ragdoll?.PrefabConfig == null
-                || !ragdoll.PrefabConfig.TryGetWeaponAttachPath(ragdoll.CachedTransform, out string attachPath))
+            if (ragdoll == null || !TryGetRagdollWeaponAttachPath(ragdoll, out string attachPath))
             {
                 return false;
             }
@@ -135,6 +134,55 @@ namespace MainGame
             return m_Owner != null
                 && m_PrefabConfig != null
                 && m_PrefabConfig.TryGetWeaponAttachPath(m_Owner.CachedTransform, out attachPath);
+        }
+
+        private bool TryGetRagdollWeaponAttachPath(RagdollEntity ragdoll, out string attachPath)
+        {
+            attachPath = null;
+            if (ragdoll.PrefabConfig != null
+                && ragdoll.PrefabConfig.TryGetWeaponAttachPath(ragdoll.CachedTransform, out attachPath))
+            {
+                return true;
+            }
+
+            Transform ownerSocket = m_PrefabConfig?.WeaponSocketTransform;
+            if (ownerSocket == null)
+            {
+                return false;
+            }
+
+            Transform ragdollSocket = FindChildRecursive(ragdoll.CachedTransform, ownerSocket.name);
+            if (ragdollSocket == null)
+            {
+                return false;
+            }
+
+            attachPath = TransformUtility.GetRelativeTransformPath(ragdoll.CachedTransform, ragdollSocket);
+            return !string.IsNullOrEmpty(attachPath);
+        }
+
+        private static Transform FindChildRecursive(Transform parent, string name)
+        {
+            if (parent == null)
+            {
+                return null;
+            }
+
+            if (parent.name == name)
+            {
+                return parent;
+            }
+
+            for (int i = 0; i < parent.childCount; i++)
+            {
+                Transform found = FindChildRecursive(parent.GetChild(i), name);
+                if (found != null)
+                {
+                    return found;
+                }
+            }
+
+            return null;
         }
 
         private bool TryAttachCurrentWeaponTo(Entity host, string attachPath)

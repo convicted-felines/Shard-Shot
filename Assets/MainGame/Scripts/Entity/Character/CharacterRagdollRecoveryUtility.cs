@@ -40,7 +40,7 @@ namespace MainGame
         /// 采集布偶姿态、对齐角色根节点并恢复显示；返回布偶快照与起身动画第一帧快照供后续混合。
         /// </summary>
         public static bool TryPrepareRecoverPoseBlend(
-            PlayerCharacterEntity character,
+            CharacterEntity character,
             RagdollEntity ragdoll,
             string getUpAnimatorStateName,
             out RagdollBonePoseSnapshot ragdollPose,
@@ -115,7 +115,7 @@ namespace MainGame
         }
 
         public static bool TryApplyRecoverPoseBlend(
-            PlayerCharacterEntity character,
+            CharacterEntity character,
             RagdollBonePoseSnapshot ragdollPose,
             RagdollBonePoseSnapshot animFirstFramePose,
             float blend01)
@@ -162,7 +162,7 @@ namespace MainGame
         /// 在多个水平朝候选中，选取与布偶臀部世界旋转最接近的起身动画第一帧对应根 yaw。
         /// </summary>
         private static Quaternion ResolveBestRecoveryWorldRotation(
-            PlayerCharacterEntity character,
+            CharacterEntity character,
             RagdollEntity ragdoll,
             string getUpAnimatorStateName,
             string boneRootName,

@@ -4,13 +4,12 @@ using UnityGameFramework.Runtime;
 namespace MainGame
 {
     /// <summary>
-    /// 玩家受击击飞：隐藏角色表现 → 生成布偶 → 倒计时后骨骼拟合到起身第一帧 → 播放趴/坐起身动画，击飞与起身后短时无敌。
+    /// 角色击飞布偶与起身流程（玩家/怪物共用）。
     /// </summary>
     [DisallowMultipleComponent]
-    public sealed class PlayerKnockdownComponent : MonoBehaviour
+    public sealed class CharacterKnockdownComponent : MonoBehaviour
     {
         private const float DefaultRecoverDelay = 2f;
-        private const float DefaultPostGetUpInvincible = 1.5f;
         private const float DefaultPoseBlendDuration = 0.4f;
 
         private enum KnockdownPhase
@@ -21,9 +20,16 @@ namespace MainGame
             GettingUp,
         }
 
-        private PlayerCharacterEntity m_Owner;
+        public struct Options
+        {
+            public bool FollowCameraWithRagdoll;
+            public bool TransferWeaponToRagdoll;
+            public float PostGetUpInvincibleDuration;
+        }
+
+        private CharacterEntity m_Owner;
+        private Options m_Options;
         private float m_RecoverDelay;
-        private float m_PostGetUpInvincibleDuration;
         private float m_PoseBlendDuration;
         private float m_Elapsed;
         private float m_PoseBlendElapsed;
@@ -36,26 +42,38 @@ namespace MainGame
         private RagdollBonePoseSnapshot m_AnimFirstFramePoseSnapshot;
         private bool m_WeaponTransferredToRagdoll;
 
-        /// <summary>击飞布偶中、骨骼拟合或起身动画播放中，均不可操控。</summary>
+        /// <summary>击飞布偶中、骨骼拟合或起身动画播放中。</summary>
         public bool IsKnockedDown => m_Phase == KnockdownPhase.Ragdoll
             || m_Phase == KnockdownPhase.PoseBlending
             || m_Phase == KnockdownPhase.GettingUp;
 
+        /// <summary>仅处于物理布偶阶段（可再次受爆炸冲量）。</summary>
+        public bool IsInRagdollPhase => m_Phase == KnockdownPhase.Ragdoll;
+
         public bool IsInvincible => IsKnockedDown || m_InvincibleRemaining > 0f;
 
-        public void Initialize(PlayerCharacterEntity owner)
+        public static CharacterKnockdownComponent Ensure(CharacterEntity owner, Options options)
+        {
+            if (owner == null)
+            {
+                return null;
+            }
+
+            CharacterKnockdownComponent knockdown = owner.GetComponent<CharacterKnockdownComponent>();
+            if (knockdown == null)
+            {
+                knockdown = owner.gameObject.AddComponent<CharacterKnockdownComponent>();
+            }
+
+            knockdown.Initialize(owner, options);
+            return knockdown;
+        }
+
+        public void Initialize(CharacterEntity owner, Options options)
         {
             m_Owner = owner;
-            CharacterPrefabConfig config = owner != null ? owner.PrefabConfig : null;
-            m_RecoverDelay = config != null && config.KnockdownRecoverDelay > 0f
-                ? config.KnockdownRecoverDelay
-                : DefaultRecoverDelay;
-            m_PostGetUpInvincibleDuration = config != null
-                ? Mathf.Max(0f, config.PostGetUpInvincibleDuration)
-                : DefaultPostGetUpInvincible;
-            m_PoseBlendDuration = config != null && config.KnockdownPoseBlendDuration > 0f
-                ? config.KnockdownPoseBlendDuration
-                : DefaultPoseBlendDuration;
+            m_Options = options;
+            RefreshTimingFromConfig();
             ResetState();
         }
 
@@ -71,6 +89,32 @@ namespace MainGame
             HideActiveRagdollIfAny();
             ResetState();
             m_Owner = null;
+        }
+
+        /// <summary>击飞布偶已就地散架后仅重置组件状态，不隐藏布偶、不归还武器。</summary>
+        public void ClearAfterDeathRagdollConversion()
+        {
+            m_ActiveRagdollEntityId = 0;
+            ResetState();
+        }
+
+        /// <summary>击飞布偶阶段死亡时，就地断开关节并散架，避免在隐藏角色原位重生布偶。</summary>
+        public bool TryConvertActiveRagdollToDeathScatter(Vector3 forceOriginWorld, float scatterForce, float hideDelay)
+        {
+            if (!IsInRagdollPhase || m_Owner == null)
+            {
+                return false;
+            }
+
+            RagdollEntity ragdoll = ResolveActiveRagdoll();
+            if (ragdoll == null)
+            {
+                return false;
+            }
+
+            ragdoll.ConvertToDeathScatter(forceOriginWorld, scatterForce, hideDelay);
+            m_ActiveRagdollEntityId = 0;
+            return true;
         }
 
         public void Tick(float elapseSeconds)
@@ -100,25 +144,20 @@ namespace MainGame
             }
         }
 
-        /// <summary>受击进入击飞；已击飞或无敌时由调用方拦截。</summary>
-        public bool TryEnterKnockdown(int attackerEntityId)
+        /// <summary>进入击飞布偶；scatterForce &lt;= 0 时使用 PrefabConfig.KnockdownScatterForce。</summary>
+        public bool TryEnterKnockdown(int attackerEntityId, float scatterForce = 0f, Vector3? forceOriginWorld = null)
         {
             if (m_Owner == null || IsKnockedDown)
             {
                 return false;
             }
 
+            RefreshTimingFromConfig();
             CharacterPrefabConfig config = m_Owner.PrefabConfig;
-            float scatterForce = config != null ? config.KnockdownScatterForce : 12f;
-            m_RecoverDelay = config != null && config.KnockdownRecoverDelay > 0f
-                ? config.KnockdownRecoverDelay
-                : DefaultRecoverDelay;
-            m_PostGetUpInvincibleDuration = config != null
-                ? Mathf.Max(0f, config.PostGetUpInvincibleDuration)
-                : DefaultPostGetUpInvincible;
-            m_PoseBlendDuration = config != null && config.KnockdownPoseBlendDuration > 0f
-                ? config.KnockdownPoseBlendDuration
-                : DefaultPoseBlendDuration;
+            if (scatterForce <= 0f)
+            {
+                scatterForce = config != null ? config.KnockdownScatterForce : 12f;
+            }
 
             m_Phase = KnockdownPhase.Ragdoll;
             m_Elapsed = 0f;
@@ -130,16 +169,42 @@ namespace MainGame
             ClearPoseSnapshots();
 
             m_Owner.SetKnockdownPresentationActive(false);
-            int ragdollEntityId = m_Owner.SpawnKnockdownRagdoll(attackerEntityId, scatterForce);
+            int ragdollEntityId = m_Owner.SpawnKnockdownRagdoll(attackerEntityId, scatterForce, forceOriginWorld);
             m_ActiveRagdollEntityId = ragdollEntityId;
             TryTransferWeaponToRagdoll();
 
-            if (ragdollEntityId != 0 && TopDownFollowCameraEntity.TryGetActive(out TopDownFollowCameraEntity camera))
+            if (m_Options.FollowCameraWithRagdoll
+                && ragdollEntityId != 0
+                && TopDownFollowCameraEntity.TryGetActive(out TopDownFollowCameraEntity camera))
             {
                 camera.SetFollowEntity(ragdollEntityId);
             }
 
-            return true;
+            return ragdollEntityId != 0;
+        }
+
+        /// <summary>布偶阶段再次受爆炸：施加冲量并重置起身倒计时。</summary>
+        public void ApplyRagdollExplosionForce(Vector3 forceOriginWorld, float scatterForce)
+        {
+            if (!IsInRagdollPhase || m_Owner == null || scatterForce <= 0f)
+            {
+                return;
+            }
+
+            RagdollEntity ragdoll = ResolveActiveRagdoll();
+            ragdoll?.ApplyExplosionScatterForce(forceOriginWorld, scatterForce);
+            m_Elapsed = 0f;
+        }
+
+        private void RefreshTimingFromConfig()
+        {
+            CharacterPrefabConfig config = m_Owner != null ? m_Owner.PrefabConfig : null;
+            m_RecoverDelay = config != null && config.KnockdownRecoverDelay > 0f
+                ? config.KnockdownRecoverDelay
+                : DefaultRecoverDelay;
+            m_PoseBlendDuration = config != null && config.KnockdownPoseBlendDuration > 0f
+                ? config.KnockdownPoseBlendDuration
+                : DefaultPoseBlendDuration;
         }
 
         private void TickRagdollRecover(float elapseSeconds)
@@ -172,7 +237,8 @@ namespace MainGame
 
             m_ActiveRagdollEntityId = 0;
 
-            if (TopDownFollowCameraEntity.TryGetActive(out TopDownFollowCameraEntity camera))
+            if (m_Options.FollowCameraWithRagdoll
+                && TopDownFollowCameraEntity.TryGetActive(out TopDownFollowCameraEntity camera))
             {
                 camera.SetFollowEntity(m_Owner.Id);
             }
@@ -253,13 +319,13 @@ namespace MainGame
             m_Phase = KnockdownPhase.None;
             m_GetUpAnimatorStateName = null;
             m_GetUpPlaybackStarted = false;
-            m_InvincibleRemaining = m_PostGetUpInvincibleDuration;
+            m_InvincibleRemaining = Mathf.Max(0f, m_Options.PostGetUpInvincibleDuration);
             ClearPoseSnapshots();
         }
 
         private void TryTransferWeaponToRagdoll()
         {
-            if (m_WeaponTransferredToRagdoll || m_Owner == null)
+            if (!m_Options.TransferWeaponToRagdoll || m_WeaponTransferredToRagdoll || m_Owner == null)
             {
                 return;
             }
@@ -270,7 +336,7 @@ namespace MainGame
                 return;
             }
 
-            CharacterWeaponComponent weaponComponent = m_Owner.WeaponComponent;
+            CharacterWeaponComponent weaponComponent = m_Owner.GetComponent<CharacterWeaponComponent>();
             if (weaponComponent != null && weaponComponent.TryTransferWeaponToRagdoll(ragdoll))
             {
                 m_WeaponTransferredToRagdoll = true;
@@ -279,12 +345,12 @@ namespace MainGame
 
         private void TransferWeaponBackToCharacter()
         {
-            if (m_Owner == null)
+            if (!m_Options.TransferWeaponToRagdoll || m_Owner == null)
             {
                 return;
             }
 
-            CharacterWeaponComponent weaponComponent = m_Owner.WeaponComponent;
+            CharacterWeaponComponent weaponComponent = m_Owner.GetComponent<CharacterWeaponComponent>();
             if (weaponComponent != null)
             {
                 weaponComponent.TryTransferWeaponBackToCharacter();
@@ -335,6 +401,11 @@ namespace MainGame
             m_GetUpPlaybackStarted = false;
             m_WeaponTransferredToRagdoll = false;
             ClearPoseSnapshots();
+        }
+
+        private void OnDestroy()
+        {
+            Clear();
         }
     }
 }

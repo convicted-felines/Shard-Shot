@@ -18,8 +18,14 @@ namespace MainGame
         private MonsterCombatComponent m_CombatComponent;
         private MonsterMovementComponent m_MovementComponent;
         private CharacterStunComponent m_StunComponent;
+        private CharacterKnockdownComponent m_KnockdownComponent;
+        private bool m_UseExplosionDeathForce;
+        private Vector3 m_ExplosionDeathForceOrigin;
+        private float m_ExplosionDeathScatterForce;
 
         public override CharacterFaction Faction => CharacterFaction.Enemy;
+
+        public bool IsKnockedDown => m_KnockdownComponent != null && m_KnockdownComponent.IsKnockedDown;
 
         protected override void OnShow(object userData)
         {
@@ -57,6 +63,12 @@ namespace MainGame
                 m_StunComponent = null;
             }
 
+            if (m_KnockdownComponent != null)
+            {
+                m_KnockdownComponent.Clear();
+                m_KnockdownComponent = null;
+            }
+
             ClearHealthState();
             base.OnHide(isShutdown, userData);
         }
@@ -64,6 +76,17 @@ namespace MainGame
         protected override void OnUpdate(float elapseSeconds, float realElapseSeconds)
         {
             base.OnUpdate(elapseSeconds, realElapseSeconds);
+            if (!IsAlive)
+            {
+                return;
+            }
+
+            m_KnockdownComponent?.Tick(elapseSeconds);
+            if (IsKnockedDown)
+            {
+                return;
+            }
+
             m_StunComponent?.Tick(elapseSeconds);
             if (m_StunComponent != null && m_StunComponent.IsStunned)
             {
@@ -83,14 +106,86 @@ namespace MainGame
 
         protected override void OnDead()
         {
+            MarkDead();
+
+            DeathRagdollSettings settings = GetDeathRagdollSettings();
+            Vector3 forceOrigin = m_UseExplosionDeathForce
+                ? m_ExplosionDeathForceOrigin
+                : ResolveDeathForceOrigin(LastAttackerEntityId);
+            float scatterForce = m_UseExplosionDeathForce
+                ? m_ExplosionDeathScatterForce
+                : settings.ScatterForce;
+            m_UseExplosionDeathForce = false;
+
+            if (m_KnockdownComponent != null
+                && m_KnockdownComponent.TryConvertActiveRagdollToDeathScatter(forceOrigin, scatterForce, settings.HideDelay))
+            {
+                m_KnockdownComponent.ClearAfterDeathRagdollConversion();
+                SetKnockdownPresentationActive(true);
+                GameEntry.Entity.HideEntity(this);
+                Log.Info("Monster character '{0}' destroyed (knockdown ragdoll scattered).", Name);
+                return;
+            }
+
+            m_KnockdownComponent?.Clear();
+            SetKnockdownPresentationActive(true);
+            SpawnDeathRagdollAndHide(LastAttackerEntityId, forceOrigin, scatterForce);
             Log.Info("Monster character '{0}' destroyed.", Name);
-            base.OnDead();
+        }
+
+        /// <summary>榴弹爆炸：扣血；未击飞则进入布偶，已击飞则再次冲量；致死则死亡散架。</summary>
+        public void ApplyExplosionHit(float damage, int attackerEntityId, Vector3 explosionCenter, float scatterForce)
+        {
+            if (!IsAlive || damage <= 0f)
+            {
+                return;
+            }
+
+            CharacterPrefabConfig config = PrefabConfig;
+            if (scatterForce <= 0f)
+            {
+                scatterForce = config != null ? config.KnockdownScatterForce : 12f;
+            }
+
+            float deathScatterForce = scatterForce > 0f
+                ? scatterForce
+                : config != null ? config.DeathScatterForce : 12f;
+            bool wasInRagdoll = m_KnockdownComponent != null && m_KnockdownComponent.IsInRagdollPhase;
+
+            m_UseExplosionDeathForce = true;
+            m_ExplosionDeathForceOrigin = explosionCenter;
+            m_ExplosionDeathScatterForce = deathScatterForce;
+            TakeDamage(damage, attackerEntityId);
+
+            if (!IsAlive)
+            {
+                m_UseExplosionDeathForce = false;
+                return;
+            }
+
+            m_UseExplosionDeathForce = false;
+
+            if (wasInRagdoll)
+            {
+                m_KnockdownComponent?.ApplyRagdollExplosionForce(explosionCenter, scatterForce);
+                return;
+            }
+
+            TryEnterKnockdown(attackerEntityId, scatterForce, explosionCenter);
+        }
+
+        /// <summary>非致命击飞布偶（榴弹等调用）。</summary>
+        public bool TryEnterKnockdown(int attackerEntityId, float scatterForce = 0f, Vector3? forceOriginWorld = null)
+        {
+            return IsAlive && m_KnockdownComponent != null
+                && m_KnockdownComponent.TryEnterKnockdown(attackerEntityId, scatterForce, forceOriginWorld);
         }
 
         private void SetupCombat()
         {
             m_Animator = GetComponentInChildren<Animator>();
             m_StunComponent = CharacterStunComponent.Ensure(this, m_Animator);
+            m_KnockdownComponent = CharacterKnockdownComponent.Ensure(this, BuildMonsterKnockdownOptions());
 
             m_WeaponComponent = GetComponent<CharacterWeaponComponent>();
             if (m_WeaponComponent == null)
@@ -171,6 +266,16 @@ namespace MainGame
             }
 
             CachedTransform.rotation = Quaternion.LookRotation(direction.normalized, Vector3.up);
+        }
+
+        private static CharacterKnockdownComponent.Options BuildMonsterKnockdownOptions()
+        {
+            return new CharacterKnockdownComponent.Options
+            {
+                FollowCameraWithRagdoll = false,
+                TransferWeaponToRagdoll = true,
+                PostGetUpInvincibleDuration = 0f,
+            };
         }
     }
 }

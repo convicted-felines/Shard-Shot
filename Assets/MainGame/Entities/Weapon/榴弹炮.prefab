@@ -353,7 +353,7 @@ MonoBehaviour:
   m_GameObject: {fileID: 5823636009866316357}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: ce5ca66e499c5af4e9e692f7d5d13bf7, type: 3}
+  m_Script: {fileID: 11500000, guid: 3f7a9c2e1b8d4f6a905c3e7d2b1a4f8c, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
   m_Muzzles:
@@ -362,6 +362,11 @@ MonoBehaviour:
   m_ShellEjectPoint: {fileID: 8454253113449805356}
   m_FireHeight: 1
   m_DefaultForwardDistance: 0.8
+  m_BurstChance: 0.536
+  m_BurstExtraCountMin: 2
+  m_BurstExtraCountMax: 4
+  m_BurstInterval: 0.08
+  m_BurstSpreadAngle: 15
 --- !u!1 &7143161053509779667
 GameObject:
   m_ObjectHideFlags: 0

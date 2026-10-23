@@ -29,7 +29,7 @@ namespace MainGame
         /// <summary>
         /// 沿角色水平前方发射子弹；每个枪口各发射一颗，高度使用角色逻辑开火高度，不受动画枪口下沉影响。
         /// </summary>
-        public void FireBullet()
+        public virtual void FireBullet()
         {
             if (Owner == null || WeaponConfig == null || string.IsNullOrEmpty(WeaponConfig.BulletAssetName))
             {
@@ -71,7 +71,7 @@ namespace MainGame
             return baseDirection;
         }
 
-        private void FireFromMuzzle(Vector3 baseDirection, Transform muzzle)
+        protected void FireFromMuzzle(Vector3 baseDirection, Transform muzzle)
         {
             Vector3 direction = ApplySpawnDirectionVariation(baseDirection);
             Quaternion rotation = Quaternion.LookRotation(direction, Vector3.up);
@@ -114,7 +114,7 @@ namespace MainGame
         /// <summary>
         /// 俯视角：前进方向取角色自身 Z 轴正方向在水平面的投影。
         /// </summary>
-        private Vector3 GetOwnerPlanarForward()
+        protected Vector3 GetOwnerPlanarForward()
         {
             Vector3 forward = Owner.Rigidbody != null
                 ? Owner.Rigidbody.rotation * Vector3.forward

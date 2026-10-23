@@ -57,7 +57,8 @@ namespace MainGame
                 return;
             }
 
-            if (m_Owner is PlayerCharacterEntity player && (player.IsKnockedDown || !player.IsAlive))
+            CharacterKnockdownComponent knockdown = m_Owner.GetComponent<CharacterKnockdownComponent>();
+            if (knockdown != null && knockdown.IsKnockedDown)
             {
                 return;
             }

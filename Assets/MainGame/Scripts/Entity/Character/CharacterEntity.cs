@@ -34,6 +34,8 @@ namespace MainGame
 
         public virtual CharacterFaction Faction => CharacterFaction.Neutral;
 
+        private static readonly int SpeedParamHash = Animator.StringToHash("Speed");
+
         protected override void OnShow(object userData)
         {
             base.OnShow(userData);
@@ -55,6 +57,11 @@ namespace MainGame
 
             m_CachedColliders = GetComponentsInChildren<Collider>(true);
             m_CachedAnimator = GetComponentInChildren<Animator>();
+            if (m_CachedAnimator != null)
+            {
+                m_CachedAnimator.keepAnimatorStateOnDisable = true;
+            }
+
             CacheRenderers();
             CharacterRigidbodyUtility.SyncRigidbodyToTransform(m_Rigidbody);
 
@@ -269,6 +276,12 @@ namespace MainGame
         /// <returns>布偶实体 Id；未生成布偶时返回 0。</returns>
         protected int SpawnDeathRagdollAndHide(int attackerEntityId = 0)
         {
+            DeathRagdollSettings settings = GetDeathRagdollSettings();
+            return SpawnDeathRagdollAndHide(attackerEntityId, ResolveForceOrigin(attackerEntityId), settings.ScatterForce);
+        }
+
+        protected int SpawnDeathRagdollAndHide(int attackerEntityId, Vector3 forceOriginWorld, float scatterForce)
+        {
             if (CharacterConfig == null || string.IsNullOrEmpty(CharacterConfig.RagdollName))
             {
                 GameEntry.Entity.HideEntity(this);
@@ -277,11 +290,11 @@ namespace MainGame
 
             DeathRagdollSettings settings = GetDeathRagdollSettings();
             int ragdollEntityId = SpawnRagdollInternal(
-                attackerEntityId,
-                settings.ScatterForce,
+                scatterForce,
                 settings.DetachLimbs,
                 settings.HideDelay,
-                ownerEntityId: 0);
+                ownerEntityId: 0,
+                forceOriginWorld);
             GameEntry.Entity.HideEntity(this);
             return ragdollEntityId;
         }
@@ -289,7 +302,7 @@ namespace MainGame
         /// <summary>
         /// 击飞时生成可恢复布偶（不隐藏角色实体，由表现层 Visible 控制）。
         /// </summary>
-        public int SpawnKnockdownRagdoll(int attackerEntityId, float scatterForce)
+        public int SpawnKnockdownRagdoll(int attackerEntityId, float scatterForce, Vector3? forceOriginWorld = null)
         {
             if (CharacterConfig == null || string.IsNullOrEmpty(CharacterConfig.RagdollName))
             {
@@ -297,24 +310,23 @@ namespace MainGame
             }
 
             return SpawnRagdollInternal(
-                attackerEntityId,
                 scatterForce,
                 detachLimbs: false,
                 hideDelay: 0f,
-                ownerEntityId: Id);
+                ownerEntityId: Id,
+                forceOriginWorld ?? ResolveForceOrigin(attackerEntityId));
         }
 
         private int SpawnRagdollInternal(
-            int attackerEntityId,
             float scatterForce,
             bool detachLimbs,
             float hideDelay,
-            int ownerEntityId)
+            int ownerEntityId,
+            Vector3 forceOriginWorld)
         {
             string boneRootName = ResolveRagBoneRootName();
             RagdollBonePoseSnapshot bonePoseSnapshot = RagdollBonePoseSnapshot.CaptureFromHierarchy(CachedTransform, boneRootName);
             Vector3 velocity = Rigidbody != null ? Rigidbody.velocity : Vector3.zero;
-            Vector3 forceOriginWorld = ResolveForceOrigin(attackerEntityId);
             RagdollEntityData ragdollData = RagdollEntityData.Create(
                 CommonUtility.TemporaryId,
                 CachedTransform.position,
@@ -343,6 +355,11 @@ namespace MainGame
             };
         }
 
+        protected Vector3 ResolveDeathForceOrigin(int attackerEntityId)
+        {
+            return ResolveForceOrigin(attackerEntityId);
+        }
+
         private Vector3 ResolveForceOrigin(int attackerEntityId)
         {
             if (attackerEntityId != 0)
@@ -360,6 +377,64 @@ namespace MainGame
         public string GetRagBoneRootName()
         {
             return ResolveRagBoneRootName();
+        }
+
+        /// <summary>采样起身动画第一帧骨骼姿态（用于布偶→动画的拟合目标）。</summary>
+        public virtual RagdollBonePoseSnapshot SampleGetUpAnimationFirstFrame(string getUpAnimatorStateName, string boneRootName)
+        {
+            if (m_CachedAnimator == null || string.IsNullOrEmpty(getUpAnimatorStateName))
+            {
+                return new RagdollBonePoseSnapshot();
+            }
+
+            m_CachedAnimator.SetFloat(SpeedParamHash, 0f);
+            m_CachedAnimator.speed = 1f;
+            m_CachedAnimator.enabled = true;
+            m_CachedAnimator.Play(getUpAnimatorStateName, 0, 0f);
+            m_CachedAnimator.Update(0f);
+            return RagdollBonePoseSnapshot.CaptureFromHierarchy(CachedTransform, boneRootName);
+        }
+
+        /// <summary>骨骼拟合期间关闭 Animator，避免与手动写骨骼冲突。</summary>
+        public virtual void SetAnimatorEnabledForPoseBlend(bool enabled)
+        {
+            if (m_CachedAnimator != null)
+            {
+                m_CachedAnimator.enabled = enabled;
+            }
+        }
+
+        /// <summary>布偶起身后播放趴起身/坐起身状态（骨骼已对齐第 0 帧时仅接管 Animator）。</summary>
+        public virtual void BeginGetUpAnimationPlayback(string getUpAnimatorStateName)
+        {
+            if (m_CachedAnimator == null || string.IsNullOrEmpty(getUpAnimatorStateName))
+            {
+                return;
+            }
+
+            m_CachedAnimator.SetFloat(SpeedParamHash, 0f);
+            m_CachedAnimator.speed = 1f;
+            m_CachedAnimator.enabled = true;
+            m_CachedAnimator.Play(getUpAnimatorStateName, 0, 0f);
+            m_CachedAnimator.Update(0f);
+        }
+
+        /// <summary>起身动画是否已结束（离开起身状态或 normalizedTime ≥ 1）。</summary>
+        public virtual bool IsGetUpAnimationComplete(bool playbackStarted, string getUpAnimatorStateName)
+        {
+            if (!playbackStarted || m_CachedAnimator == null || string.IsNullOrEmpty(getUpAnimatorStateName))
+            {
+                return false;
+            }
+
+            int getUpStateHash = Animator.StringToHash(getUpAnimatorStateName);
+            AnimatorStateInfo state = m_CachedAnimator.GetCurrentAnimatorStateInfo(0);
+            if (state.shortNameHash == getUpStateHash)
+            {
+                return state.normalizedTime >= 1f;
+            }
+
+            return true;
         }
 
         protected string ResolveRagBoneRootName()

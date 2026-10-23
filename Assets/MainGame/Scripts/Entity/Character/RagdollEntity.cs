@@ -65,7 +65,9 @@ namespace MainGame
     }
 
     /// <summary>
-    /// 死亡布偶实体：采集角色姿态后启用刚体物理；散架模式下对各刚体施加冲量，关节断裂完全由预制体 breakForce/breakTorque 决定。
+    /// 布偶实体：采集角色姿态后启用刚体物理。
+    /// 死亡散架（DetachLimbs）时由 <see cref="RagdollJointDetachConfig"/> 脚本断开指定关节并施加冲量；
+    /// 击飞布偶保持关节连接，回池时还原 connectedBody。
     /// </summary>
     public sealed class RagdollEntity : Entity
     {
@@ -74,6 +76,7 @@ namespace MainGame
 
         private RagdollEntityData m_Data;
         private CharacterPrefabConfig m_PrefabConfig;
+        private RagdollJointDetachConfig m_JointDetachConfig;
         private Rigidbody m_HipsRigidbody;
         private Transform m_HipsTransform;
         private int m_OwnerEntityId;
@@ -90,7 +93,7 @@ namespace MainGame
 
         private Animator m_Animator;
         private List<Rigidbody> m_CachedRigidbodies;
-        private Dictionary<Joint, (Rigidbody connectedBody, float breakForce, float breakTorque)> m_DefaultJointState;
+        private List<CharacterJointDefaultState> m_DefaultJointStates;
         private List<DefaultLocalPose> m_DefaultLocalPoses;
         private Coroutine m_ReleasePhysicsCoroutine;
 
@@ -102,10 +105,97 @@ namespace MainGame
             public Vector3 LocalScale;
         }
 
+        private struct CharacterJointDefaultState
+        {
+            public Transform Transform;
+            public Rigidbody ConnectedBody;
+            public float BreakForce;
+            public float BreakTorque;
+            public Vector3 Anchor;
+            public Vector3 Axis;
+            public bool AutoConfigureConnectedAnchor;
+            public Vector3 ConnectedAnchor;
+            public Vector3 SwingAxis;
+            public SoftJointLimit LowTwistLimit;
+            public SoftJointLimit HighTwistLimit;
+            public SoftJointLimit Swing1Limit;
+            public SoftJointLimit Swing2Limit;
+            public bool EnableProjection;
+            public float ProjectionDistance;
+            public float ProjectionAngle;
+            public bool EnableCollision;
+            public bool EnablePreprocessing;
+            public float MassScale;
+            public float ConnectedMassScale;
+
+            public static CharacterJointDefaultState Capture(CharacterJoint joint)
+            {
+                return new CharacterJointDefaultState
+                {
+                    Transform = joint.transform,
+                    ConnectedBody = joint.connectedBody,
+                    BreakForce = joint.breakForce,
+                    BreakTorque = joint.breakTorque,
+                    Anchor = joint.anchor,
+                    Axis = joint.axis,
+                    AutoConfigureConnectedAnchor = joint.autoConfigureConnectedAnchor,
+                    ConnectedAnchor = joint.connectedAnchor,
+                    SwingAxis = joint.swingAxis,
+                    LowTwistLimit = joint.lowTwistLimit,
+                    HighTwistLimit = joint.highTwistLimit,
+                    Swing1Limit = joint.swing1Limit,
+                    Swing2Limit = joint.swing2Limit,
+                    EnableProjection = joint.enableProjection,
+                    ProjectionDistance = joint.projectionDistance,
+                    ProjectionAngle = joint.projectionAngle,
+                    EnableCollision = joint.enableCollision,
+                    EnablePreprocessing = joint.enablePreprocessing,
+                    MassScale = joint.massScale,
+                    ConnectedMassScale = joint.connectedMassScale,
+                };
+            }
+
+            public void Restore()
+            {
+                if (Transform == null)
+                {
+                    return;
+                }
+
+                CharacterJoint joint = Transform.GetComponent<CharacterJoint>();
+                if (joint == null)
+                {
+                    joint = Transform.gameObject.AddComponent<CharacterJoint>();
+                }
+
+                joint.connectedBody = ConnectedBody;
+                joint.breakForce = BreakForce;
+                joint.breakTorque = BreakTorque;
+                joint.anchor = Anchor;
+                joint.axis = Axis;
+                joint.autoConfigureConnectedAnchor = AutoConfigureConnectedAnchor;
+                joint.connectedAnchor = ConnectedAnchor;
+                joint.swingAxis = SwingAxis;
+                joint.lowTwistLimit = LowTwistLimit;
+                joint.highTwistLimit = HighTwistLimit;
+                joint.swing1Limit = Swing1Limit;
+                joint.swing2Limit = Swing2Limit;
+                joint.enableProjection = EnableProjection;
+                joint.projectionDistance = ProjectionDistance;
+                joint.projectionAngle = ProjectionAngle;
+                joint.enableCollision = EnableCollision;
+                joint.enablePreprocessing = EnablePreprocessing;
+                joint.massScale = MassScale;
+                joint.connectedMassScale = ConnectedMassScale;
+            }
+        }
+
         protected override void OnInit(object userData)
         {
             base.OnInit(userData);
             m_PrefabConfig = GetComponent<CharacterPrefabConfig>();
+            m_JointDetachConfig = GetComponent<RagdollJointDetachConfig>();
+            m_JointDetachConfig?.EnsureBoneTransformsCached();
             CacheDefaultJointState();
             CacheDefaultLocalPoses();
         }
@@ -122,11 +212,8 @@ namespace MainGame
 
             m_OwnerEntityId = m_Data.OwnerEntityId;
             StopReleasePhysicsCoroutine();
-
-            if (!m_Data.DetachLimbs)
-            {
-                RestoreDefaultJointConnections();
-            }
+            RestoreDefaultJointConnections();
+            Physics.SyncTransforms();
 
             m_HipsTransform = FindChildRecursive(CachedTransform, m_Data.BoneRootName);
             if (m_HipsTransform == null)
@@ -147,18 +234,16 @@ namespace MainGame
                 m_Animator.enabled = false;
             }
 
+            SetupOwnerDamageProxies();
             ApplyCapturedPoseAndSchedulePhysicsRelease();
         }
 
         protected override void OnHide(bool isShutdown, object userData)
         {
             StopReleasePhysicsCoroutine();
+            ClearOwnerDamageProxies();
             ResetRagdollPhysicsForPool();
-
-            if (m_Data == null || !m_Data.DetachLimbs)
-            {
-                RestoreDefaultJointConnections();
-            }
+            RestoreDefaultJointConnections();
 
             if (m_Animator != null)
             {
@@ -190,19 +275,93 @@ namespace MainGame
             return true;
         }
 
-        private void CacheDefaultJointState()
+        /// <summary>对已模拟的击飞布偶施加爆炸冲量。</summary>
+        public void ApplyExplosionScatterForce(Vector3 forceOriginWorld, float scatterForce)
         {
-            if (m_DefaultJointState != null)
+            if (scatterForce <= 0f)
             {
                 return;
             }
 
-            m_DefaultJointState = new Dictionary<Joint, (Rigidbody connectedBody, float breakForce, float breakTorque)>();
-            Joint[] joints = CachedTransform.GetComponentsInChildren<Joint>(true);
+            ApplyScatterForce(forceOriginWorld, scatterForce);
+        }
+
+        /// <summary>将击飞布偶就地转为死亡散架：断开关节、施加冲量、解除角色绑定。</summary>
+        public void ConvertToDeathScatter(Vector3 forceOriginWorld, float scatterForce, float hideDelay)
+        {
+            ClearOwnerDamageProxies();
+            DetachConfiguredJoints();
+            Physics.SyncTransforms();
+            ApplyScatterForce(forceOriginWorld, scatterForce);
+
+            m_OwnerEntityId = 0;
+            if (m_Data != null)
+            {
+                m_Data.OwnerEntityId = 0;
+                m_Data.DetachLimbs = true;
+            }
+
+            if (hideDelay > 0f)
+            {
+                DelayHide(hideDelay);
+            }
+        }
+
+        private void SetupOwnerDamageProxies()
+        {
+            if (m_OwnerEntityId == 0)
+            {
+                return;
+            }
+
+            Collider[] colliders = CachedTransform.GetComponentsInChildren<Collider>(true);
+            for (int i = 0; i < colliders.Length; i++)
+            {
+                Collider collider = colliders[i];
+                if (collider == null || collider.isTrigger)
+                {
+                    continue;
+                }
+
+                RagdollOwnerDamageProxy proxy = collider.GetComponent<RagdollOwnerDamageProxy>();
+                if (proxy == null)
+                {
+                    proxy = collider.gameObject.AddComponent<RagdollOwnerDamageProxy>();
+                }
+
+                proxy.Initialize(m_OwnerEntityId);
+
+                if (Constant.Layer.CharacterLayerId >= 0)
+                {
+                    collider.gameObject.layer = Constant.Layer.CharacterLayerId;
+                }
+            }
+        }
+
+        private void ClearOwnerDamageProxies()
+        {
+            RagdollOwnerDamageProxy[] proxies = CachedTransform.GetComponentsInChildren<RagdollOwnerDamageProxy>(true);
+            for (int i = 0; i < proxies.Length; i++)
+            {
+                if (proxies[i] != null)
+                {
+                    proxies[i].Clear();
+                }
+            }
+        }
+
+        private void CacheDefaultJointState()
+        {
+            if (m_DefaultJointStates != null)
+            {
+                return;
+            }
+
+            CharacterJoint[] joints = CachedTransform.GetComponentsInChildren<CharacterJoint>(true);
+            m_DefaultJointStates = new List<CharacterJointDefaultState>(joints.Length);
             for (int i = 0; i < joints.Length; i++)
             {
-                Joint joint = joints[i];
-                m_DefaultJointState[joint] = (joint.connectedBody, joint.breakForce, joint.breakTorque);
+                m_DefaultJointStates.Add(CharacterJointDefaultState.Capture(joints[i]));
             }
         }
 
@@ -256,23 +415,28 @@ namespace MainGame
 
         private void RestoreDefaultJointConnections()
         {
-            if (m_DefaultJointState == null)
+            if (m_DefaultJointStates == null)
             {
                 return;
             }
 
-            foreach (KeyValuePair<Joint, (Rigidbody connectedBody, float breakForce, float breakTorque)> entry in m_DefaultJointState)
+            for (int i = 0; i < m_DefaultJointStates.Count; i++)
             {
-                Joint joint = entry.Key;
-                if (joint == null)
-                {
-                    continue;
-                }
-
-                joint.connectedBody = entry.Value.connectedBody;
-                joint.breakForce = entry.Value.breakForce;
-                joint.breakTorque = entry.Value.breakTorque;
+                m_DefaultJointStates[i].Restore();
             }
+        }
+
+        private void DetachConfiguredJoints()
+        {
+            if (m_JointDetachConfig != null)
+            {
+                m_JointDetachConfig.DetachConfiguredJoints();
+                return;
+            }
+
+            Log.Warning(
+                "RagdollEntity: DetachLimbs requested but RagdollJointDetachConfig is missing on '{0}'.",
+                Name);
         }
 
         private void ApplyCapturedPoseAndSchedulePhysicsRelease()
@@ -315,6 +479,14 @@ namespace MainGame
             }
 
             RealignJointAnchorsToCurrentPose();
+
+            if (m_Data != null && m_Data.DetachLimbs)
+            {
+                DetachConfiguredJoints();
+                yield return new WaitForEndOfFrame();
+                Physics.SyncTransforms();
+            }
+
             ReleaseRigidbodiesToSimulation(m_CachedRigidbodies);
 
             if (m_Data != null)

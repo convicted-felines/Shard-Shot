@@ -69,7 +69,7 @@ namespace MainGame
             return !string.IsNullOrEmpty(attachPath);
         }
 
-        /// <summary>死亡时启用散架模式（依赖预制体关节 breakForce/breakTorque 配置；回池前仅重置骨骼默认 local 位姿）。</summary>
+        /// <summary>死亡时启用散架模式（由布偶 RagdollJointDetachConfig 脚本断开关节；回池时还原连接）。</summary>
         public bool DetachLimbsOnDeath => m_DetachLimbsOnDeath;
 
         public float DeathRagdollHideDelay => m_DeathRagdollHideDelay;

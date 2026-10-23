@@ -37,7 +37,7 @@ namespace MainGame
                 case WeaponEnum.加特林:
                     return typeof(GatlingWeaponEntity);
                 case WeaponEnum.榴弹炮:
-                    return typeof(RangedWeaponEntity);
+                    return typeof(HowitzerWeaponEntity);
             }
 
             if (config != null && config.WeaponType == Constant.WeaponType.Melee)

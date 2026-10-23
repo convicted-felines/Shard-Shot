@@ -55,9 +55,14 @@ namespace MainGame
             }
         }
 
-        protected virtual void OnDead()
+        protected void MarkDead()
         {
             m_IsAlive = false;
+        }
+
+        protected virtual void OnDead()
+        {
+            MarkDead();
             SpawnDeathRagdollAndHide(m_LastAttackerEntityId);
         }
 

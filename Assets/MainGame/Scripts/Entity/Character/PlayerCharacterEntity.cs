@@ -14,7 +14,7 @@ namespace MainGame
         private float m_AnimatorSpeed;
         private CharacterWeaponComponent m_WeaponComponent;
         private CharacterCombatComponent m_CombatComponent;
-        private PlayerKnockdownComponent m_KnockdownComponent;
+        private CharacterKnockdownComponent m_KnockdownComponent;
         private CharacterStunComponent m_StunComponent;
 
         private float m_CurrentHealth;
@@ -80,13 +80,7 @@ namespace MainGame
             m_CombatComponent.Initialize(this, m_WeaponComponent, m_Animator);
             EquipWeapon(WeaponEnum.加特林);
 
-            m_KnockdownComponent = GetComponent<PlayerKnockdownComponent>();
-            if (m_KnockdownComponent == null)
-            {
-                m_KnockdownComponent = gameObject.AddComponent<PlayerKnockdownComponent>();
-            }
-
-            m_KnockdownComponent.Initialize(this);
+            m_KnockdownComponent = CharacterKnockdownComponent.Ensure(this, BuildPlayerKnockdownOptions());
             m_StunComponent = CharacterStunComponent.Ensure(this, m_Animator);
 
             if (Rigidbody == null)
@@ -149,66 +143,6 @@ namespace MainGame
             m_CombatComponent?.Tick(elapseSeconds);
         }
 
-        /// <summary>采样起身动画第一帧骨骼姿态（用于布偶→动画的拟合目标）。</summary>
-        public RagdollBonePoseSnapshot SampleGetUpAnimationFirstFrame(string getUpAnimatorStateName, string boneRootName)
-        {
-            if (m_Animator == null || string.IsNullOrEmpty(getUpAnimatorStateName))
-            {
-                return new RagdollBonePoseSnapshot();
-            }
-
-            m_AnimatorSpeed = 0f;
-            m_Animator.SetFloat(SpeedParamHash, 0f);
-            m_Animator.speed = 1f;
-            m_Animator.enabled = true;
-            m_Animator.Play(getUpAnimatorStateName, 0, 0f);
-            m_Animator.Update(0f);
-            return RagdollBonePoseSnapshot.CaptureFromHierarchy(CachedTransform, boneRootName);
-        }
-
-        /// <summary>骨骼拟合期间关闭 Animator，避免与手动写骨骼冲突。</summary>
-        public void SetAnimatorEnabledForPoseBlend(bool enabled)
-        {
-            if (m_Animator != null)
-            {
-                m_Animator.enabled = enabled;
-            }
-        }
-
-        /// <summary>布偶起身后播放趴起身/坐起身状态（骨骼已对齐第 0 帧时仅接管 Animator）。</summary>
-        public void BeginGetUpAnimationPlayback(string getUpAnimatorStateName)
-        {
-            if (m_Animator == null || string.IsNullOrEmpty(getUpAnimatorStateName))
-            {
-                return;
-            }
-
-            m_AnimatorSpeed = 0f;
-            m_Animator.SetFloat(SpeedParamHash, 0f);
-            m_Animator.speed = 1f;
-            m_Animator.enabled = true;
-            m_Animator.Play(getUpAnimatorStateName, 0, 0f);
-            m_Animator.Update(0f);
-        }
-
-        /// <summary>起身动画是否已结束（离开起身状态或 normalizedTime ≥ 1）。</summary>
-        public bool IsGetUpAnimationComplete(bool playbackStarted, string getUpAnimatorStateName)
-        {
-            if (!playbackStarted || m_Animator == null || string.IsNullOrEmpty(getUpAnimatorStateName))
-            {
-                return false;
-            }
-
-            int getUpStateHash = Animator.StringToHash(getUpAnimatorStateName);
-            AnimatorStateInfo state = m_Animator.GetCurrentAnimatorStateInfo(0);
-            if (state.shortNameHash == getUpStateHash)
-            {
-                return state.normalizedTime >= 1f;
-            }
-
-            return true;
-        }
-
         public void TakeDamage(float damage, int attackerEntityId = 0)
         {
             if (!m_IsAlive || damage <= 0f || IsInvincible)
@@ -231,7 +165,7 @@ namespace MainGame
         protected override DeathRagdollSettings GetDeathRagdollSettings()
         {
             DeathRagdollSettings settings = base.GetDeathRagdollSettings();
-            settings.DetachLimbs = false;
+            settings.DetachLimbs = true;
             // 玩家死亡后摄像机继续跟随布偶，不自动回收。
             settings.HideDelay = 0f;
             return settings;
@@ -240,15 +174,26 @@ namespace MainGame
         private void OnDead(int attackerEntityId)
         {
             m_IsAlive = false;
-            if (m_KnockdownComponent != null)
+
+            DeathRagdollSettings settings = GetDeathRagdollSettings();
+            Vector3 forceOrigin = ResolveDeathForceOrigin(attackerEntityId);
+
+            if (m_KnockdownComponent != null
+                && m_KnockdownComponent.TryConvertActiveRagdollToDeathScatter(forceOrigin, settings.ScatterForce, settings.HideDelay))
             {
-                m_KnockdownComponent.Clear();
+                m_KnockdownComponent.ClearAfterDeathRagdollConversion();
+                SetKnockdownPresentationActive(true);
+                GameEntry.Entity.HideEntity(this);
+                Log.Info("Player character defeated (knockdown ragdoll scattered).");
+                return;
             }
+
+            m_KnockdownComponent?.Clear();
 
             // 击飞中可能关掉了渲染/物理，死亡生成布偶前先恢复，避免 HideEntity 时状态残留。
             SetKnockdownPresentationActive(true);
 
-            int ragdollEntityId = SpawnDeathRagdollAndHide(attackerEntityId);
+            int ragdollEntityId = SpawnDeathRagdollAndHide(attackerEntityId, forceOrigin, settings.ScatterForce);
             if (ragdollEntityId != 0 && TopDownFollowCameraEntity.TryGetActive(out TopDownFollowCameraEntity camera))
             {
                 camera.SetFollowEntity(ragdollEntityId);
@@ -305,6 +250,19 @@ namespace MainGame
         private bool IsCombatFacingLocked()
         {
             return m_CombatComponent != null && m_CombatComponent.IsAttacking;
+        }
+
+        private CharacterKnockdownComponent.Options BuildPlayerKnockdownOptions()
+        {
+            CharacterPrefabConfig config = PrefabConfig;
+            return new CharacterKnockdownComponent.Options
+            {
+                FollowCameraWithRagdoll = true,
+                TransferWeaponToRagdoll = true,
+                PostGetUpInvincibleDuration = config != null
+                    ? Mathf.Max(0f, config.PostGetUpInvincibleDuration)
+                    : 1.5f,
+            };
         }
     }
 }
