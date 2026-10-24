@@ -12,24 +12,75 @@
       <Resource Name="ui" LoadType="3" Packed="True" />
     </Resources>
     <Assets>
+      <Asset Guid="00f5c80242ad45c409e028cd59290e7b" ResourceName="entity" />
       <Asset Guid="0776cc02a3fcfc445a85d2dd810694c1" ResourceName="data" />
+      <Asset Guid="0bc472bbda6013944b6a4932ae2ac6d1" ResourceName="entity" />
+      <Asset Guid="0f949a7f73d128547b1314a7e471f19f" ResourceName="data" />
+      <Asset Guid="0fea48026c651e14aad73e521db3a9ca" ResourceName="entity" />
+      <Asset Guid="142f6a4ea9e13614bb8165647a21bf69" ResourceName="entity" />
+      <Asset Guid="165624a5f90cede4bb6caff15c467714" ResourceName="entity" />
+      <Asset Guid="181523c1cf5e30549ba4127ccd4048b0" ResourceName="entity" />
+      <Asset Guid="1850c12044007374c8b9073052f0a828" ResourceName="entity" />
+      <Asset Guid="19492913bbd399e4098500141759b40c" ResourceName="sound" />
+      <Asset Guid="1e9c07cf17bcb884f926af53fb2659e0" ResourceName="entity" />
+      <Asset Guid="2bf29d09604ea3f4d8b07b62378ac3c9" ResourceName="anim" />
+      <Asset Guid="2f7a13dd29b1d984ca717558892f4d32" ResourceName="entity" />
+      <Asset Guid="3592ae429b3ff4548a592f5b78fc9348" ResourceName="sound" />
       <Asset Guid="379ba96c2e9c61d42acdfae098000beb" ResourceName="ui" />
+      <Asset Guid="37b582acb6025804ba2ac6f161bcb03e" ResourceName="sound" />
+      <Asset Guid="3eb3934cb62f31147a818b9030d67807" ResourceName="anim" />
+      <Asset Guid="3f9ee048471ee0a40b9fd84a93122190" ResourceName="entity" />
+      <Asset Guid="4230152cd87d0834f8352390cb0af241" ResourceName="entity" />
       <Asset Guid="426ad19fa0eed02439db7fcc8def0dab" ResourceName="data" />
       <Asset Guid="4cd5c405ae2134141aa2969fa27b3814" ResourceName="scenes" />
       <Asset Guid="530f7814334a55d41ad6c5f59e028979" ResourceName="data" />
       <Asset Guid="5aedbece1517bad48bfa32d524cb94ad" ResourceName="ui" />
+      <Asset Guid="5dca744e8759d2f43815d8d29446cf4b" ResourceName="data" />
+      <Asset Guid="5fb89980d2f62244a9573829cf1910cb" ResourceName="entity" />
+      <Asset Guid="5fb919002c890e94883c598a8c98fd76" ResourceName="entity" />
+      <Asset Guid="63000014271eef44d963e6845c1f7cae" ResourceName="sound" />
       <Asset Guid="663b2554c97674c4a99e659642c9badf" ResourceName="entity" />
+      <Asset Guid="66829d430ec43b340b0d256be1afa23f" ResourceName="entity" />
+      <Asset Guid="68876521592d3fc42bc194d2fa27ffa9" ResourceName="anim" />
+      <Asset Guid="69ff372b9a1f4b94fa76cb347008dd1f" ResourceName="entity" />
+      <Asset Guid="6dc747021cde6a94186e12ac8aa7907b" ResourceName="data" />
+      <Asset Guid="701d006c964b1fa43828bade6bb209cd" ResourceName="entity" />
       <Asset Guid="70eb4b2330a67b846966ccd46cac4db7" ResourceName="data" />
       <Asset Guid="72384d391559e194caaf91822e7b2f7e" ResourceName="data" />
+      <Asset Guid="746fe108a98f8284c9c2eae4b212adb0" ResourceName="model" />
       <Asset Guid="878bc70719b9c554485c0cef39e4ba8b" ResourceName="scenes" />
+      <Asset Guid="883d477cc3536b241bf62efbfe631aae" ResourceName="anim" />
+      <Asset Guid="909273a0922a64b40babdc2c70aac270" ResourceName="data" />
+      <Asset Guid="9728553d1666a044c9dd294ad4c36472" ResourceName="entity" />
       <Asset Guid="9845517358ddc5246bbc00516c74acfb" ResourceName="ui" />
+      <Asset Guid="98917978211aab844844722ab5bbe81e" ResourceName="sound" />
+      <Asset Guid="9bdd0dd54ac2d3343b626165c93d13ba" ResourceName="entity" />
+      <Asset Guid="a3b4c5d6e7f8091a2b3c4d5e6f708192" ResourceName="entity" />
       <Asset Guid="a459e33ae26545e28e216fe34c3964e7" ResourceName="ui" />
+      <Asset Guid="ad4a5aad474f8e14aba647481f4fac2b" ResourceName="entity" />
+      <Asset Guid="ada2c613d57fa2e4fbaa86d002d72ab8" ResourceName="entity" />
+      <Asset Guid="b1f956a5404f49547833410b59c56aa5" ResourceName="entity" />
       <Asset Guid="b30719f439898294d8b05e4cf7ef7d0e" ResourceName="data" />
+      <Asset Guid="b53b9ef30760619449a102971f3135fb" ResourceName="entity" />
+      <Asset Guid="c17fe8bb4c32e324a9c26a828263c98d" ResourceName="data" />
+      <Asset Guid="c4ad12867e5fe9a4cbc842a82e57d011" ResourceName="entity" />
+      <Asset Guid="c4f9451701be7ca45865736ad38281e2" ResourceName="entity" />
+      <Asset Guid="c65d4ed7f484a574e945bc265754c518" ResourceName="data" />
       <Asset Guid="c763c222ebbbc6943913e6caefe2d0aa" ResourceName="ui" />
+      <Asset Guid="c8e4f1a29b7d4e6f8a0c1d2e3f4a5b6c" ResourceName="data" />
+      <Asset Guid="d010795802a9ce04eb262bd6f7cf7de6" ResourceName="model" />
+      <Asset Guid="d0a79bf3a4f25a547b77a1214de3e7bc" ResourceName="data" />
       <Asset Guid="e0c8f50b9d20a884c95a3bfa41fdee22" ResourceName="ui" />
+      <Asset Guid="e2bb5e737c6ffa643b8d305d03252d83" ResourceName="sound" />
+      <Asset Guid="e5c1d26e6ec7b434aad24657dcd1f3a9" ResourceName="sound" />
+      <Asset Guid="f07e0237e6c034c4e91de1d2f1bdec2a" ResourceName="entity" />
       <Asset Guid="f195296dc55fc914e84491643c6cec59" ResourceName="fonts" />
       <Asset Guid="f36bd914387622a4ea83ecfd99edfcfc" ResourceName="data" />
+      <Asset Guid="f4d1d94bc6f032c4ab89558df9f96dd2" ResourceName="anim" />
       <Asset Guid="f84a7534bcb8b804b95eea9bca9e0932" ResourceName="ui" />
+      <Asset Guid="f88439d78e3ff0743b2f02f5c4f325af" ResourceName="sound" />
+      <Asset Guid="fc3fe908a898c1748a483fc011aaaaaf" ResourceName="entity" />
+      <Asset Guid="fcb483b25a85356408dfa2786c36f6b9" ResourceName="fonts" />
       <Asset Guid="ff774d4d0f3ec174380d2fb1a6e8d99a" ResourceName="ui" />
     </Assets>
   </ResourceCollection>

@@ -485,11 +485,11 @@ MonoBehaviour:
   m_DeathShakeAmplitude: 0.8
   m_DeathShakeDuration: 0.08
   m_DeathShakeFrequency: 28
-  m_SpawnMaxAliveCount: 40
-  m_SpawnBound: 20
+  m_SpawnMaxAliveCount: 50
+  m_SpawnBound: 18
   m_SpawnIntervalInitial: 5
   m_SpawnIntervalMin: 0.5
-  m_SpawnAccelerationDuration: 20
+  m_SpawnAccelerationDuration: 25
   m_SpawnWaveInterval: 10
   m_SpawnBurstInterval: 0.08
 --- !u!1 &2101073572
@@ -547,7 +547,7 @@ PrefabInstance:
     - target: {fileID: 5260654791754587630, guid: 419c7e1a3a27841debb0a95b47d38bd3,
         type: 3}
       propertyPath: m_Enabled
-      value: 0
+      value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 5260654791754587630, guid: 419c7e1a3a27841debb0a95b47d38bd3,
         type: 3}
