@@ -54,6 +54,7 @@ namespace MainGame
 
             GameEntry.Entity.ShowWorldUIFloatingText(Id, $"-{damage:0}");
             m_HealthBarComponent?.SetProgress(GetHealthProgress01());
+            PlayHitFlash();
 
             if (m_CurrentHealth <= 0f)
             {
@@ -70,6 +71,7 @@ namespace MainGame
         protected virtual void OnDead()
         {
             MarkDead();
+            PlayCharacterDeathSound();
             SpawnDeathRagdollAndHide(m_LastAttackerEntityId);
         }
 

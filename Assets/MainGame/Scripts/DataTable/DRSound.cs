@@ -159,6 +159,50 @@ namespace MainGame
         /// 获得金币
         /// </summary>
         获得金币 = 1000,
+        /// <summary>
+        /// 
+        /// </summary>
+        加特林开火 = 1001,
+        /// <summary>
+        /// 
+        /// </summary>
+        加特林普通子弹击中 = 1002,
+        /// <summary>
+        /// 
+        /// </summary>
+        加特林巨型子弹击中 = 1003,
+        /// <summary>
+        /// 
+        /// </summary>
+        加特林巨型分裂子弹击中 = 1004,
+        /// <summary>
+        /// 
+        /// </summary>
+        榴弹炮开火 = 1005,
+        /// <summary>
+        /// 
+        /// </summary>
+        榴弹爆炸 = 1006,
+        /// <summary>
+        /// 
+        /// </summary>
+        骑士剑击中 = 1007,
+        /// <summary>
+        /// 
+        /// </summary>
+        角色死亡 = 1008,
+        /// <summary>
+        /// 
+        /// </summary>
+        大斧头击中 = 1009,
+        /// <summary>
+        /// 
+        /// </summary>
+        挥动骑士剑 = 1010,
+        /// <summary>
+        /// 
+        /// </summary>
+        挥动斧头 = 1011,
     }
 
 

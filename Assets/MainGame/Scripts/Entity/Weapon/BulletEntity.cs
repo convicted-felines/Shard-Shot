@@ -119,6 +119,7 @@ namespace MainGame
                 CachedTransform.position))
             {
                 PlayHitEffect();
+                PlayGatlingHitSound();
                 NotifyGatlingAttackSpeedBoost();
 
                 if (m_BulletData.Kind == BulletKind.Lead)
@@ -183,6 +184,29 @@ namespace MainGame
             }
 
             GameEntry.Juice?.PlayEffect(m_BulletData.HitEffect, CachedTransform.position);
+        }
+
+        private void PlayGatlingHitSound()
+        {
+            if (m_BulletData == null || !m_BulletData.GatlingAttackSpeedBoost)
+            {
+                return;
+            }
+
+            GameEntry.Sound.PlaySound(GetGatlingHitSound(m_BulletData.Kind), CachedTransform.position);
+        }
+
+        private static SoundEnum GetGatlingHitSound(BulletKind kind)
+        {
+            switch (kind)
+            {
+                case BulletKind.Lead:
+                    return SoundEnum.加特林巨型子弹击中;
+                case BulletKind.Scatter:
+                    return SoundEnum.加特林巨型分裂子弹击中;
+                default:
+                    return SoundEnum.加特林普通子弹击中;
+            }
         }
 
         private void NotifyGatlingAttackSpeedBoost()

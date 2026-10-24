@@ -200,6 +200,10 @@ namespace MainGame
         /// 
         /// </summary>
         骑士剑 = 3,
+        /// <summary>
+        /// 
+        /// </summary>
+        大斧头 = 4,
     }
 
 

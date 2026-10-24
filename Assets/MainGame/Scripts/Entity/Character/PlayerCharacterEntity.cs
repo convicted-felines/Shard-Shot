@@ -17,6 +17,8 @@ namespace MainGame
         private CharacterKnockdownComponent m_KnockdownComponent;
         private CharacterKnockbackComponent m_KnockbackComponent;
         private CharacterStunComponent m_StunComponent;
+        private CharacterInvincibilityFlashComponent m_InvincibilityFlashComponent;
+        private CharacterKnockdownDimComponent m_KnockdownDimComponent;
         private CharacterWorldHealthBarComponent m_HealthBarComponent;
 
         private float m_CurrentHealth;
@@ -85,6 +87,8 @@ namespace MainGame
             EquipWeapon(WeaponEnum.加特林);
 
             m_KnockdownComponent = CharacterKnockdownComponent.Ensure(this, BuildPlayerKnockdownOptions());
+            m_InvincibilityFlashComponent = CharacterInvincibilityFlashComponent.Ensure(this);
+            m_KnockdownDimComponent = CharacterKnockdownDimComponent.Ensure(this);
             m_KnockbackComponent = CharacterKnockbackComponent.Ensure(this);
             m_StunComponent = CharacterStunComponent.Ensure(this, m_Animator);
 
@@ -128,6 +132,8 @@ namespace MainGame
             m_AnimatorSpeed = 0f;
             m_CombatComponent = null;
             m_WeaponComponent = null;
+            m_InvincibilityFlashComponent = null;
+            m_KnockdownDimComponent = null;
             m_IsAlive = false;
             m_CurrentHealth = 0f;
             base.OnHide(isShutdown, userData);
@@ -142,6 +148,8 @@ namespace MainGame
             }
 
             m_KnockdownComponent?.Tick(elapseSeconds);
+            m_KnockdownDimComponent?.Tick();
+            m_InvincibilityFlashComponent?.Tick(elapseSeconds);
             if (IsKnockedDown)
             {
                 return;
@@ -171,11 +179,13 @@ namespace MainGame
 
             if (m_CurrentHealth <= 0f)
             {
+                PlayHitFlash();
                 OnDead(attackerEntityId);
                 return;
             }
 
             m_KnockdownComponent?.TryEnterKnockdown(attackerEntityId);
+            PlayHitFlash();
         }
 
         protected override DeathRagdollSettings GetDeathRagdollSettings()
@@ -192,6 +202,7 @@ namespace MainGame
             m_IsAlive = false;
             m_HealthBarComponent?.Hide();
             PlayCharacterDeathEffect();
+            PlayCharacterDeathSound();
 
             DeathRagdollSettings settings = GetDeathRagdollSettings();
             Vector3 forceOrigin = ResolveDeathForceOrigin(attackerEntityId);
@@ -290,6 +301,7 @@ namespace MainGame
             {
                 FollowCameraWithRagdoll = true,
                 TransferWeaponToRagdoll = true,
+                DimDuringKnockdown = true,
                 PostGetUpInvincibleDuration = config != null
                     ? Mathf.Max(0f, config.PostGetUpInvincibleDuration)
                     : 1.5f,

@@ -644,7 +644,7 @@ PrefabInstance:
     - target: {fileID: 5260654791754696314, guid: 419c7e1a3a27841debb0a95b47d38bd3,
         type: 3}
       propertyPath: m_SoundGroups.Array.data[1].m_AgentHelperCount
-      value: 15
+      value: 30
       objectReference: {fileID: 0}
     - target: {fileID: 5260654791754696314, guid: 419c7e1a3a27841debb0a95b47d38bd3,
         type: 3}

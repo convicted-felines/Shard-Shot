@@ -129,19 +129,33 @@ namespace MainGame
             }
 
             PlayerCharacterEntity playerTarget = target as PlayerCharacterEntity;
-            bool playKnightHitEffect = playerTarget != null
+            WeaponEnum weaponEnum = (WeaponEnum)weaponConfig.Id;
+            bool shouldPlayHitFeedback = playerTarget != null
                 && playerTarget.IsAlive
-                && !playerTarget.IsInvincible
-                && (WeaponEnum)weaponConfig.Id == WeaponEnum.骑士剑;
+                && !playerTarget.IsInvincible;
 
             m_HasAppliedDamageThisCycle = true;
             damageable.TakeDamage(weaponConfig.Damage, m_Owner.Id);
 
-            if (playKnightHitEffect)
+            if (shouldPlayHitFeedback
+                && playerTarget.TryGetCombatWorldPosition(out Vector3 hitPosition))
             {
-                GameEntry.Juice?.PlayEffectAtPrefabRotation(
-                    EffectEnum.骑士剑击中,
-                    playerTarget.CachedTransform.position);
+                PlayMeleeHitFeedback(weaponEnum, hitPosition);
+            }
+        }
+
+        private static void PlayMeleeHitFeedback(WeaponEnum weaponEnum, Vector3 hitPosition)
+        {
+            switch (weaponEnum)
+            {
+                case WeaponEnum.骑士剑:
+                    GameEntry.Juice?.PlayEffectAtPrefabRotation(EffectEnum.骑士剑击中, hitPosition);
+                    GameEntry.Sound.PlaySound(SoundEnum.骑士剑击中, hitPosition);
+                    break;
+                case WeaponEnum.大斧头:
+                    GameEntry.Juice?.PlayEffectAtPrefabRotation(EffectEnum.大斧头击中, hitPosition);
+                    GameEntry.Sound.PlaySound(SoundEnum.大斧头击中, hitPosition);
+                    break;
             }
         }
 
@@ -156,11 +170,30 @@ namespace MainGame
             m_IsAttacking = true;
             m_HasAppliedDamageThisCycle = false;
             m_AttackElapsed = 0f;
+            PlayMeleeSwingSound((WeaponEnum)weaponConfig.Id);
             ApplyAttackAnimatorSpeed();
             if (m_Animator != null)
             {
                 m_Animator.ResetTrigger(AttackEndHash);
                 m_Animator.SetTrigger(SwingTheKnifeHash);
+            }
+        }
+
+        private void PlayMeleeSwingSound(WeaponEnum weaponEnum)
+        {
+            if (m_Owner == null)
+            {
+                return;
+            }
+
+            switch (weaponEnum)
+            {
+                case WeaponEnum.骑士剑:
+                    GameEntry.Sound.PlaySound(SoundEnum.挥动骑士剑, m_Owner);
+                    break;
+                case WeaponEnum.大斧头:
+                    GameEntry.Sound.PlaySound(SoundEnum.挥动斧头, m_Owner);
+                    break;
             }
         }
 

@@ -155,6 +155,10 @@ namespace MainGame
         /// 角色眩晕
         /// </summary>
         角色眩晕 = 11,
+        /// <summary>
+        /// 大斧头击中
+        /// </summary>
+        大斧头击中 = 12,
     }
 
 

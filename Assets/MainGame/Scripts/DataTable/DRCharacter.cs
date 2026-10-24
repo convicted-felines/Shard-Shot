@@ -163,6 +163,10 @@ namespace MainGame
         /// 
         /// </summary>
         骑士机器人 = 2,
+        /// <summary>
+        /// 
+        /// </summary>
+        熊怪 = 3,
     }
 
 

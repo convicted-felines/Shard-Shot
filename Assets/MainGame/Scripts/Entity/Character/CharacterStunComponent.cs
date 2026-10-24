@@ -139,10 +139,34 @@ namespace MainGame
                 return;
             }
 
-            m_StunEffectEntityId = GameEntry.Entity.ShowEffectAttachedAtPrefabRotation(
-                EffectEnum.角色眩晕,
-                m_Owner.Id,
-                disableAutoHide: true);
+            CharacterPrefabConfig config = m_Owner.PrefabConfig;
+            if (config != null
+                && config.TryGetOverheadAttachPath(m_Owner.CachedTransform, out string overheadAttachPath))
+            {
+                m_StunEffectEntityId = GameEntry.Entity.ShowEffectAttachedToTransform(
+                    EffectEnum.角色眩晕,
+                    m_Owner.Id,
+                    overheadAttachPath,
+                    Quaternion.identity,
+                    disableAutoHide: true);
+            }
+            else
+            {
+                Vector3 followOffset = Vector3.zero;
+                bool suppressTableEffectHeight = false;
+                if (config != null && config.OverheadHeightOffset > 0f)
+                {
+                    followOffset = new Vector3(0f, config.OverheadHeightOffset, 0f);
+                    suppressTableEffectHeight = true;
+                }
+
+                m_StunEffectEntityId = GameEntry.Entity.ShowEffectAttachedAtPrefabRotation(
+                    EffectEnum.角色眩晕,
+                    m_Owner.Id,
+                    followOffset,
+                    disableAutoHide: true,
+                    suppressTableEffectHeight: suppressTableEffectHeight);
+            }
         }
 
         private void HideStunEffect()

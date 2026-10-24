@@ -115,8 +115,10 @@ namespace MainGame
         protected override void OnDead()
         {
             MarkDead();
+            PlayCharacterDeathSound();
 
-            if (TypeId == (int)CharacterEnum.骑士机器人)
+            if (TypeId == (int)CharacterEnum.骑士机器人
+                || TypeId == (int)CharacterEnum.熊怪)
             {
                 PlayCharacterDeathEffect();
             }
@@ -191,11 +193,18 @@ namespace MainGame
 
             if (wasInRecovery)
             {
-                m_KnockdownComponent?.TryReenterKnockdownFromRecovery(attackerEntityId, scatterForce, explosionCenter);
+                if (m_KnockdownComponent?.TryReenterKnockdownFromRecovery(attackerEntityId, scatterForce, explosionCenter) == true)
+                {
+                    PlayHitFlash();
+                }
+
                 return;
             }
 
-            TryEnterKnockdown(attackerEntityId, scatterForce, explosionCenter);
+            if (TryEnterKnockdown(attackerEntityId, scatterForce, explosionCenter))
+            {
+                PlayHitFlash();
+            }
         }
 
         /// <summary>非致命击飞布偶（榴弹等调用）。</summary>

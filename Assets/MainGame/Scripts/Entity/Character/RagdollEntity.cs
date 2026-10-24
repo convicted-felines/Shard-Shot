@@ -240,6 +240,12 @@ namespace MainGame
 
         protected override void OnHide(bool isShutdown, object userData)
         {
+            CharacterHitFlashComponent flash = GetComponent<CharacterHitFlashComponent>();
+            flash?.Clear();
+
+            CharacterSustainedDimComponent dim = GetComponent<CharacterSustainedDimComponent>();
+            dim?.Clear();
+
             StopReleasePhysicsCoroutine();
             ClearOwnerDamageProxies();
             ResetRagdollPhysicsForPool();

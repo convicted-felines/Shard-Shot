@@ -102,6 +102,7 @@ namespace MainGame
 
             float baseSpeed = WeaponConfig.AttackSpeed;
             float maxSpeed = baseSpeed * m_MaxAttackSpeedMultiplier;
+            float fullBoost = baseSpeed * m_BoostPerHit;
             float previousSpeed = m_CurrentAttackSpeed;
             if (previousSpeed >= maxSpeed)
             {
@@ -109,13 +110,20 @@ namespace MainGame
                 return;
             }
 
-            m_CurrentAttackSpeed += baseSpeed * m_BoostPerHit;
+            m_CurrentAttackSpeed += fullBoost;
             if (m_CurrentAttackSpeed > maxSpeed)
             {
                 m_CurrentAttackSpeed = maxSpeed;
             }
 
-            int displayBoost = Mathf.RoundToInt(m_CurrentAttackSpeed - previousSpeed);
+            float actualBoost = m_CurrentAttackSpeed - previousSpeed;
+            // 叠满后回落再叠时只能补到上限，实际加成小于配置的单次加成则不飘字。
+            if (actualBoost + 0.001f < fullBoost)
+            {
+                return;
+            }
+
+            int displayBoost = Mathf.RoundToInt(actualBoost);
             if (displayBoost <= 0)
             {
                 return;
@@ -159,6 +167,12 @@ namespace MainGame
         public void ResetAttackSpeed()
         {
             m_CurrentAttackSpeed = WeaponConfig != null ? WeaponConfig.AttackSpeed : 0f;
+        }
+
+        public override void FireBullet()
+        {
+            GameEntry.Sound.PlaySound(SoundEnum.加特林开火, this);
+            base.FireBullet();
         }
 
         protected override void OnBulletSpawned(BulletData data, Transform muzzle)

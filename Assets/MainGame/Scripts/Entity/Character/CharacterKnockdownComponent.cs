@@ -26,6 +26,7 @@ namespace MainGame
         {
             public bool FollowCameraWithRagdoll;
             public bool TransferWeaponToRagdoll;
+            public bool DimDuringKnockdown;
             public float PostGetUpInvincibleDuration;
         }
 
@@ -36,6 +37,7 @@ namespace MainGame
         private float m_Elapsed;
         private float m_PoseBlendElapsed;
         private float m_InvincibleRemaining;
+        private float m_InvincibleTotalDuration;
         private int m_ActiveRagdollEntityId;
         private KnockdownPhase m_Phase;
         private string m_GetUpAnimatorStateName;
@@ -62,6 +64,15 @@ namespace MainGame
             || m_Phase == KnockdownPhase.GettingUp;
 
         public bool IsInvincible => IsKnockedDown || m_InvincibleRemaining > 0f;
+
+        public bool DimDuringKnockdown => m_Options.DimDuringKnockdown;
+
+        /// <summary>起身动画结束后的短暂无敌（不含击飞/起身过程）。</summary>
+        public bool IsInPostGetUpInvincibility => m_Phase == KnockdownPhase.None && m_InvincibleRemaining > 0f;
+
+        public float PostGetUpInvincibleRemaining => m_InvincibleRemaining;
+
+        public float PostGetUpInvincibleTotal => m_InvincibleTotalDuration;
 
         public static CharacterKnockdownComponent Ensure(CharacterEntity owner, Options options)
         {
@@ -175,6 +186,7 @@ namespace MainGame
             m_Elapsed = 0f;
             m_PoseBlendElapsed = 0f;
             m_InvincibleRemaining = 0f;
+            m_InvincibleTotalDuration = 0f;
             m_GetUpAnimatorStateName = null;
             m_GetUpPlaybackStarted = false;
             m_WeaponTransferredToRagdoll = false;
@@ -252,6 +264,7 @@ namespace MainGame
             m_Elapsed = 0f;
             m_PoseBlendElapsed = 0f;
             m_InvincibleRemaining = 0f;
+            m_InvincibleTotalDuration = 0f;
 
             m_Owner.SetAnimatorEnabledForPoseBlend(false);
             m_Owner.SetKnockdownPresentationActive(false);
@@ -460,7 +473,13 @@ namespace MainGame
             m_GetUpAnimatorStateName = null;
             m_GetUpPlaybackStarted = false;
             m_InvincibleRemaining = Mathf.Max(0f, m_Options.PostGetUpInvincibleDuration);
+            m_InvincibleTotalDuration = m_InvincibleRemaining;
             ClearPoseSnapshots();
+
+            if (m_InvincibleRemaining > 0f && m_Owner != null)
+            {
+                CharacterInvincibilityFlashComponent.Ensure(m_Owner)?.OnPostGetUpInvincibilityBegan();
+            }
         }
 
         private void TryTransferWeaponToRagdoll()
@@ -535,6 +554,7 @@ namespace MainGame
             m_Elapsed = 0f;
             m_PoseBlendElapsed = 0f;
             m_InvincibleRemaining = 0f;
+            m_InvincibleTotalDuration = 0f;
             m_ActiveRagdollEntityId = 0;
             m_Phase = KnockdownPhase.None;
             m_GetUpAnimatorStateName = null;

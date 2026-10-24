@@ -2,5 +2,6 @@
 #	Id		Name	AssetName	RagdollName	MoveSpeed	TurnSpeed	Health	AttackRange
 #	int		string	string	string	float	float	float	float
 #	编号	策划备注	名称	资源名称	布偶资源名称	移动速度	转身速度	生命值	攻击距离
-	1		玩家角色	玩家角色	玩家角色Ragdoll	4	8	40	20
+	1		玩家角色	玩家角色	玩家角色Ragdoll	5	8	40	20
 	2		骑士机器人	骑士机器人	骑士机器人Ragdoll	2	4	70	1.5
+	3		熊怪	熊怪	熊怪Ragdoll	1.5	4	150	2

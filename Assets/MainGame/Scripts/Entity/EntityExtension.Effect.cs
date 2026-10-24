@@ -31,7 +31,7 @@ namespace MainGame
 
             data.AssetName = drEffect.AssetName;
             data.EntityName = drEffect.Name;
-            if (data.EffectHeight == 0f)
+            if (!data.SuppressTableEffectHeight && data.EffectHeight == 0f)
             {
                 data.EffectHeight = drEffect.EffectHeight;
             }
@@ -96,18 +96,21 @@ namespace MainGame
         /// <summary>
         /// 附着到目标实体的子节点，并保持世界朝向（如枪口火焰跟随枪口动画且 Z 轴对准开火方向）。
         /// </summary>
-        public static void ShowEffectAttachedToTransform(this EntityComponent entityComponent, EffectEnum effectEnum,
-            int followEntityId, string followTransformPath, Quaternion worldRotation, Vector3 localOffset = default)
+        public static int ShowEffectAttachedToTransform(this EntityComponent entityComponent, EffectEnum effectEnum,
+            int followEntityId, string followTransformPath, Quaternion worldRotation, Vector3 localOffset = default,
+            bool disableAutoHide = false)
         {
             if (entityComponent == null || effectEnum == EffectEnum.Unknown || followEntityId == 0
                 || string.IsNullOrEmpty(followTransformPath))
             {
-                return;
+                return 0;
             }
 
             EffectData data = EffectData.CreateAttachedToTransform(
                 effectEnum, followEntityId, followTransformPath, worldRotation, localOffset);
+            data.DisableAutoHide = disableAutoHide;
             entityComponent.ShowEffect(data);
+            return data.Id;
         }
 
         /// <summary>
@@ -115,7 +118,8 @@ namespace MainGame
         /// </summary>
         /// <returns>特效实体 Id；创建失败时返回 0。</returns>
         public static int ShowEffectAttachedAtPrefabRotation(this EntityComponent entityComponent,
-            EffectEnum effectEnum, int followEntityId, Vector3 followOffset = default, bool disableAutoHide = false)
+            EffectEnum effectEnum, int followEntityId, Vector3 followOffset = default, bool disableAutoHide = false,
+            bool suppressTableEffectHeight = false)
         {
             if (entityComponent == null || effectEnum == EffectEnum.Unknown || followEntityId == 0)
             {
@@ -123,7 +127,7 @@ namespace MainGame
             }
 
             EffectData data = EffectData.CreateAttachedAtPrefabRotation(
-                effectEnum, followEntityId, followOffset, disableAutoHide);
+                effectEnum, followEntityId, followOffset, disableAutoHide, suppressTableEffectHeight);
             entityComponent.ShowEffect(data);
             return data.Id;
         }

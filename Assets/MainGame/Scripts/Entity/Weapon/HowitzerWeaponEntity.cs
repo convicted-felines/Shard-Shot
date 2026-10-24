@@ -10,8 +10,18 @@ namespace MainGame
     {
         [SerializeField]
         [Range(0f, 1f)]
-        [Tooltip("每次开火后触发连发的概率")]
+        [Tooltip("连发概率初始值（换枪或角色死亡后还原为此值）")]
         private float m_BurstChance = 0.15f;
+
+        [SerializeField]
+        [Range(0f, 1f)]
+        [Tooltip("每次开火后连发概率的递增值，直至达到概率上限")]
+        private float m_BurstChanceIncrementPerFire = 0.05f;
+
+        [SerializeField]
+        [Range(0f, 1f)]
+        [Tooltip("连发概率上限")]
+        private float m_MaxBurstChance = 0.5f;
 
         [SerializeField]
         [Min(1)]
@@ -32,6 +42,7 @@ namespace MainGame
         private float m_BurstSpreadAngle = 15f;
 
         private Coroutine m_BurstCoroutine;
+        private float m_CurrentBurstChance;
 
         protected override void OnBulletSpawned(BulletData data, Transform muzzle)
         {
@@ -56,19 +67,44 @@ namespace MainGame
 
         public override void FireBullet()
         {
+            PlayFireSound();
             base.FireBullet();
             TryStartBurst();
+            IncreaseBurstChanceAfterFire();
+        }
+
+        protected override void OnEquipped()
+        {
+            base.OnEquipped();
+            ResetBurstChance();
         }
 
         protected override void OnUnequipped()
         {
             CancelBurst();
+            ResetBurstChance();
             base.OnUnequipped();
+        }
+
+        public void ResetBurstChance()
+        {
+            m_CurrentBurstChance = m_BurstChance;
+        }
+
+        private void IncreaseBurstChanceAfterFire()
+        {
+            if (m_BurstChanceIncrementPerFire <= 0f)
+            {
+                return;
+            }
+
+            float maxChance = Mathf.Max(m_BurstChance, m_MaxBurstChance);
+            m_CurrentBurstChance = Mathf.Min(m_CurrentBurstChance + m_BurstChanceIncrementPerFire, maxChance);
         }
 
         private void TryStartBurst()
         {
-            if (m_BurstChance <= 0f || m_BurstExtraCountMax <= 0 || Random.value >= m_BurstChance)
+            if (m_CurrentBurstChance <= 0f || m_BurstExtraCountMax <= 0 || Random.value >= m_CurrentBurstChance)
             {
                 return;
             }
@@ -104,6 +140,7 @@ namespace MainGame
 
         private void FireBurstShot()
         {
+            PlayFireSound();
             Vector3 baseDirection = GetOwnerPlanarForward();
             if (m_BurstSpreadAngle > 0f)
             {
@@ -154,6 +191,11 @@ namespace MainGame
             }
 
             return null;
+        }
+
+        private void PlayFireSound()
+        {
+            GameEntry.Sound.PlaySound(SoundEnum.榴弹炮开火, this);
         }
 
         private void CancelBurst()

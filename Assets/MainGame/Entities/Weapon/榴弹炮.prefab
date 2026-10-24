@@ -363,10 +363,12 @@ MonoBehaviour:
   m_FireHeight: 1
   m_DefaultForwardDistance: 0.8
   m_BurstChance: 0.1
+  m_BurstChanceIncrementPerFire: 0.05
+  m_MaxBurstChance: 0.65
   m_BurstExtraCountMin: 2
-  m_BurstExtraCountMax: 4
-  m_BurstInterval: 0.1
-  m_BurstSpreadAngle: 15
+  m_BurstExtraCountMax: 5
+  m_BurstInterval: 0.15
+  m_BurstSpreadAngle: 20
 --- !u!1 &7143161053509779667
 GameObject:
   m_ObjectHideFlags: 0

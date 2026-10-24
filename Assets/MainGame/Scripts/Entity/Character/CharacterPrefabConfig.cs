@@ -37,6 +37,15 @@ namespace MainGame
         [Tooltip("布偶姿态缓动拟合到起身动画第一帧的时长（秒）。")]
         private float m_KnockdownPoseBlendDuration = 0.4f;
 
+        [Header("头顶挂点")]
+        [SerializeField]
+        [Tooltip("可选：精确头顶骨骼或空物体；未设置时使用 OverheadHeightOffset。")]
+        private GameObject m_OverheadAnchor;
+
+        [SerializeField]
+        [Tooltip("相对实体根节点的世界 Y 偏移，用于血条、眩晕等；0 表示使用全局默认。")]
+        private float m_OverheadHeightOffset;
+
         [Header("默认武器")]
         [SerializeField]
         private GameObject m_WeaponSocket;
@@ -52,6 +61,27 @@ namespace MainGame
         public Transform WeaponSocketTransform => m_WeaponSocket != null ? m_WeaponSocket.transform : null;
 
         public WeaponEnum DefaultWeapon => m_DefaultWeapon;
+
+        public Transform OverheadAnchorTransform => m_OverheadAnchor != null ? m_OverheadAnchor.transform : null;
+
+        /// <summary>相对实体根节点的头顶 Y 偏移；0 表示走全局默认高度。</summary>
+        public float OverheadHeightOffset => m_OverheadHeightOffset;
+
+        /// <summary>
+        /// 获取头顶挂点相对实体根节点的路径（角色与布偶变体共用同一配置引用）。
+        /// </summary>
+        public bool TryGetOverheadAttachPath(Transform entityRoot, out string attachPath)
+        {
+            attachPath = null;
+            Transform anchor = OverheadAnchorTransform;
+            if (entityRoot == null || anchor == null)
+            {
+                return false;
+            }
+
+            attachPath = TransformUtility.GetRelativeTransformPath(entityRoot, anchor);
+            return !string.IsNullOrEmpty(attachPath);
+        }
 
         /// <summary>
         /// 获取武器挂点相对实体根节点的路径（角色与布偶变体共用同一配置引用）。

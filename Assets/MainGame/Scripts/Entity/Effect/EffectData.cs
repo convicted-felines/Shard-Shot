@@ -69,6 +69,13 @@ namespace MainGame
             set;
         }
 
+        /// <summary>为 true 时不叠加特效表中的 EffectHeight（用于角色头顶偏移已包含高度）。</summary>
+        public bool SuppressTableEffectHeight
+        {
+            get;
+            set;
+        }
+
         public static EffectData Create(EffectEnum effectEnum, Vector3 position, Quaternion rotation)
         {
             EffectData data = ReferencePool.Acquire<EffectData>();
@@ -82,6 +89,7 @@ namespace MainGame
             data.Rotation = rotation;
             data.UsePrefabRotation = false;
             data.DisableAutoHide = false;
+            data.SuppressTableEffectHeight = false;
             return data;
         }
 
@@ -98,6 +106,7 @@ namespace MainGame
             data.Rotation = Quaternion.identity;
             data.UsePrefabRotation = true;
             data.DisableAutoHide = false;
+            data.SuppressTableEffectHeight = false;
             return data;
         }
 
@@ -116,6 +125,7 @@ namespace MainGame
             data.Rotation = Quaternion.identity;
             data.UsePrefabRotation = false;
             data.DisableAutoHide = false;
+            data.SuppressTableEffectHeight = false;
             return data;
         }
 
@@ -130,11 +140,12 @@ namespace MainGame
         }
 
         public static EffectData CreateAttachedAtPrefabRotation(EffectEnum effectEnum, int followEntityId,
-            Vector3 followOffset = default, bool disableAutoHide = false)
+            Vector3 followOffset = default, bool disableAutoHide = false, bool suppressTableEffectHeight = false)
         {
             EffectData data = CreateAttached(effectEnum, followEntityId, followOffset);
             data.UsePrefabRotation = true;
             data.DisableAutoHide = disableAutoHide;
+            data.SuppressTableEffectHeight = suppressTableEffectHeight;
             return data;
         }
 
@@ -149,6 +160,7 @@ namespace MainGame
             AutoHideDuration = 0f;
             UsePrefabRotation = false;
             DisableAutoHide = false;
+            SuppressTableEffectHeight = false;
         }
     }
 }

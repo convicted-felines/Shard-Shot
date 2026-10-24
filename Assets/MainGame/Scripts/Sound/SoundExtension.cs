@@ -87,6 +87,30 @@ namespace MainGame
             return soundComponent.PlaySound(AssetUtility.GetSoundAsset(drSound.AssetName), "Sound", Constant.AssetPriority.SoundAsset, playSoundParams, bindingEntity != null ? bindingEntity.Entity : null, userData);
         }
 
+        public static int? PlaySound(this SoundComponent soundComponent, SoundEnum soundId, Vector3 worldPosition, object userData = null)
+        {
+            if (!Enum.IsDefined(typeof(SoundEnum), soundId) || soundId == SoundEnum.Unknown)
+            {
+                return null;
+            }
+
+            DRSound drSound = GameEntry.DataTable.GetDataRow<DRSound>((int)soundId);
+            if (drSound == null)
+            {
+                Log.Warning("Can not load sound '{0}' from data table.", soundId.ToString());
+                return null;
+            }
+
+            PlaySoundParams playSoundParams = CreatePlaySoundParams(drSound);
+            return soundComponent.PlaySound(
+                AssetUtility.GetSoundAsset(drSound.AssetName),
+                "Sound",
+                Constant.AssetPriority.SoundAsset,
+                playSoundParams,
+                worldPosition,
+                userData);
+        }
+
         /// <summary>播放音效，音量 = 配置表 Volume × volumeScale（0~1）。</summary>
         public static int? PlaySound(this SoundComponent soundComponent, SoundEnum soundId, Entity bindingEntity, float volumeScale, object userData = null)
         {

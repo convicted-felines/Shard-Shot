@@ -68,8 +68,36 @@ namespace MainGame
             Name = m_DRCharacter != null ? m_DRCharacter.Name : Utility.Text.Format("Character_{0}", Id);
         }
 
+        protected void PlayHitFlash()
+        {
+            RagdollEntity ragdoll = FindActiveRagdollEntityFor(this);
+            GameObject target = ragdoll != null ? ragdoll.gameObject : gameObject;
+            CharacterHitFlashComponent.Ensure(target)?.Flash();
+        }
+
+        protected void ClearHitFlash()
+        {
+            CharacterHitFlashComponent component = GetComponent<CharacterHitFlashComponent>();
+            component?.Clear();
+        }
+
+        protected void ClearInvincibilityFlash()
+        {
+            CharacterInvincibilityFlashComponent component = GetComponent<CharacterInvincibilityFlashComponent>();
+            component?.Clear();
+        }
+
+        protected void ClearKnockdownDim()
+        {
+            CharacterKnockdownDimComponent component = GetComponent<CharacterKnockdownDimComponent>();
+            component?.Clear();
+        }
+
         protected override void OnHide(bool isShutdown, object userData)
         {
+            ClearHitFlash();
+            ClearInvincibilityFlash();
+            ClearKnockdownDim();
             RestoreRenderersIfSuppressed();
             m_CharacterData = null;
             m_DRCharacter = null;
@@ -125,8 +153,47 @@ namespace MainGame
                 xzSource = hipsWorld;
             }
 
+            if (TryGetOverheadWorldPosition(xzSource, out worldPosition))
+            {
+                return true;
+            }
+
             worldPosition = new Vector3(xzSource.x, fixedWorldY, xzSource.z);
             return true;
+        }
+
+        /// <summary>
+        /// 头顶世界坐标：优先挂点骨骼，否则使用 Prefab 配置的 Y 偏移。
+        /// </summary>
+        public bool TryGetOverheadWorldPosition(out Vector3 worldPosition)
+        {
+            return TryGetOverheadWorldPosition(CachedTransform.position, out worldPosition);
+        }
+
+        private bool TryGetOverheadWorldPosition(Vector3 xzSource, out Vector3 worldPosition)
+        {
+            if (m_PrefabConfig == null)
+            {
+                worldPosition = default;
+                return false;
+            }
+
+            Transform overheadAnchor = m_PrefabConfig.OverheadAnchorTransform;
+            if (overheadAnchor != null && overheadAnchor.gameObject.activeInHierarchy)
+            {
+                worldPosition = overheadAnchor.position;
+                return true;
+            }
+
+            float heightOffset = m_PrefabConfig.OverheadHeightOffset;
+            if (heightOffset > 0f)
+            {
+                worldPosition = new Vector3(xzSource.x, xzSource.y + heightOffset, xzSource.z);
+                return true;
+            }
+
+            worldPosition = default;
+            return false;
         }
 
         /// <summary>
@@ -306,6 +373,15 @@ namespace MainGame
         protected void PlayCharacterDeathEffect()
         {
             GameEntry.Juice?.PlayEffectAtPrefabRotation(EffectEnum.角色死亡, CachedTransform.position);
+        }
+
+        /// <summary>
+        /// 在角色战斗位置播放死亡音效。
+        /// </summary>
+        protected void PlayCharacterDeathSound()
+        {
+            TryGetCombatWorldPosition(out Vector3 position);
+            GameEntry.Sound.PlaySound(SoundEnum.角色死亡, position);
         }
 
         protected struct DeathRagdollSettings

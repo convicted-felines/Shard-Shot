@@ -253,7 +253,9 @@ namespace MainGame
 
             m_HasExploded = true;
 
-            GameEntry.Juice?.PlayEffectAtPrefabRotation(EffectEnum.榴弹爆炸, CachedTransform.position);
+            Vector3 explosionPosition = CachedTransform.position;
+            GameEntry.Juice?.PlayEffectAtPrefabRotation(EffectEnum.榴弹爆炸, explosionPosition);
+            GameEntry.Sound.PlaySound(SoundEnum.榴弹爆炸, explosionPosition);
             ApplyExplosionEffects();
             GameEntry.Entity.HideEntity(this);
         }
