@@ -68,10 +68,6 @@ namespace MainGame
             m_Floating = m_WorldUIData.IsFloatingText;
             m_FloatElapsed = 0f;
             m_FloatStartPosition = m_WorldUIData.Position;
-            if (m_Floating)
-            {
-                m_WorldUIData.FollowEntityId = 0;
-            }
 
             SetProgress(m_WorldUIData.Progress);
             ApplyPose(true);
@@ -132,7 +128,9 @@ namespace MainGame
             m_FloatElapsed += elapseSeconds;
             float duration = m_WorldUIData.FloatDuration;
             float t = Mathf.Clamp01(m_FloatElapsed / duration);
-            Vector3 position = m_FloatStartPosition + Vector3.up * (m_WorldUIData.FloatRiseDistance * t);
+            Vector3 position = ResolveFloatingBasePosition()
+                + m_WorldUIData.FloatScatterOffset
+                + Vector3.up * (m_WorldUIData.FloatRiseDistance * t);
             m_WorldUIData.Position = position;
 
             if (m_CanvasGroup != null)
@@ -155,6 +153,26 @@ namespace MainGame
                 m_Floating = false;
                 GameEntry.Entity.HideEntity(this);
             }
+        }
+
+        private Vector3 ResolveFloatingBasePosition()
+        {
+            if (m_WorldUIData == null)
+            {
+                return m_FloatStartPosition;
+            }
+
+            if (m_WorldUIData.FollowEntityId != 0 && GameEntry.Entity != null)
+            {
+                Entity follow = GameEntry.Entity.GetGameEntity(m_WorldUIData.FollowEntityId);
+                if (follow != null)
+                {
+                    return follow.CachedTransform.position + m_WorldUIData.FollowOffset;
+                }
+            }
+
+            // 世界坐标飘字使用固定起点，避免每帧把已上浮位置写回后重复累加。
+            return m_FloatStartPosition;
         }
 
         private void ApplyPose(bool force)

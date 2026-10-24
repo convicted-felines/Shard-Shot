@@ -365,7 +365,7 @@ MonoBehaviour:
   m_BurstChance: 0.1
   m_BurstExtraCountMin: 2
   m_BurstExtraCountMax: 4
-  m_BurstInterval: 0.08
+  m_BurstInterval: 0.1
   m_BurstSpreadAngle: 15
 --- !u!1 &7143161053509779667
 GameObject:

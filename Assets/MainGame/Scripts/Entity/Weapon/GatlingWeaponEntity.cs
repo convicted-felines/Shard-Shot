@@ -1,15 +1,20 @@
+using GameFramework;
 using UnityEngine;
 
 namespace MainGame
 {
     /// <summary>
-    /// 加特林：站定连射时射速逐秒叠加，停射或移动后重置为表内攻速。
+    /// 加特林：子弹命中敌人时叠射速，射速随时间逐渐回落到表内攻速。
     /// </summary>
     public sealed class GatlingWeaponEntity : RangedWeaponEntity
     {
         [SerializeField]
-        [Tooltip("每秒叠加攻速，相对表内 AttackSpeed 的倍率（如 0.5 = 每秒 +50% 表攻速）")]
-        private float m_RampPerSecond = 0.5f;
+        [Tooltip("每次命中敌人增加的攻速，相对表内 AttackSpeed 的倍率（如 0.15 = +15% 表攻速）")]
+        private float m_BoostPerHit = 0.15f;
+
+        [SerializeField]
+        [Tooltip("每秒回落的攻速，相对表内 AttackSpeed 的倍率（如 0.4 = 每秒 -40% 表攻速）")]
+        private float m_DecayPerSecond = 0.4f;
 
         [SerializeField]
         [Tooltip("相对表内 AttackSpeed 的最大倍率")]
@@ -69,6 +74,18 @@ namespace MainGame
         [Tooltip("铅弹命中击退强度倍率（相对普通子弹）")]
         private float m_LeadKnockbackMultiplier = 2f;
 
+        [SerializeField]
+        [Tooltip("攻速加成飘字相对枪体的世界偏移")]
+        private Vector3 m_AttackSpeedBoostUIOffset = new Vector3(0f, 0.35f, 0f);
+
+        [SerializeField]
+        [Tooltip("攻速加成飘字上浮时长（秒）")]
+        private float m_AttackSpeedBoostFloatDuration = 0.9f;
+
+        [SerializeField]
+        [Tooltip("攻速加成飘字上浮距离（世界单位）")]
+        private float m_AttackSpeedBoostFloatRiseDistance = 0.45f;
+
         private float m_CurrentAttackSpeed;
 
         public float GetEffectiveAttackSpeed()
@@ -76,32 +93,90 @@ namespace MainGame
             return m_CurrentAttackSpeed;
         }
 
-        public void TickRamp(float elapseSeconds, bool isStationaryAttacking)
+        public void OnEnemyHit()
         {
-            if (!isStationaryAttacking || WeaponConfig == null || elapseSeconds <= 0f)
+            if (WeaponConfig == null || m_BoostPerHit <= 0f)
             {
                 return;
             }
 
             float baseSpeed = WeaponConfig.AttackSpeed;
             float maxSpeed = baseSpeed * m_MaxAttackSpeedMultiplier;
-            m_CurrentAttackSpeed += baseSpeed * m_RampPerSecond * elapseSeconds;
+            float previousSpeed = m_CurrentAttackSpeed;
+            if (previousSpeed >= maxSpeed)
+            {
+                m_CurrentAttackSpeed = maxSpeed;
+                return;
+            }
+
+            m_CurrentAttackSpeed += baseSpeed * m_BoostPerHit;
             if (m_CurrentAttackSpeed > maxSpeed)
             {
                 m_CurrentAttackSpeed = maxSpeed;
             }
+
+            int displayBoost = Mathf.RoundToInt(m_CurrentAttackSpeed - previousSpeed);
+            if (displayBoost <= 0)
+            {
+                return;
+            }
+
+            ShowAttackSpeedBoostWorldUI(displayBoost);
         }
 
-        public void ResetRamp()
+        private void ShowAttackSpeedBoostWorldUI(int boostAmount)
+        {
+            GameEntry.Entity.ShowWorldUIFloatingTextAttached(
+                Id,
+                m_AttackSpeedBoostUIOffset,
+                Utility.Text.Format("攻速+{0}", boostAmount),
+                WorldUIEnum.普通字体蓝灰,
+                m_AttackSpeedBoostFloatDuration,
+                m_AttackSpeedBoostFloatRiseDistance);
+        }
+
+        public void TickDecay(float elapseSeconds)
+        {
+            if (WeaponConfig == null || elapseSeconds <= 0f || m_DecayPerSecond <= 0f)
+            {
+                return;
+            }
+
+            float baseSpeed = WeaponConfig.AttackSpeed;
+            if (m_CurrentAttackSpeed <= baseSpeed)
+            {
+                m_CurrentAttackSpeed = baseSpeed;
+                return;
+            }
+
+            m_CurrentAttackSpeed -= baseSpeed * m_DecayPerSecond * elapseSeconds;
+            if (m_CurrentAttackSpeed < baseSpeed)
+            {
+                m_CurrentAttackSpeed = baseSpeed;
+            }
+        }
+
+        public void ResetAttackSpeed()
         {
             m_CurrentAttackSpeed = WeaponConfig != null ? WeaponConfig.AttackSpeed : 0f;
         }
 
-        protected override void OnBulletSpawned(BulletData data)
+        protected override void OnBulletSpawned(BulletData data, Transform muzzle)
         {
             if (data == null)
             {
                 return;
+            }
+
+            if (muzzle != null)
+            {
+                string muzzlePath = TransformUtility.GetRelativeTransformPath(CachedTransform, muzzle);
+                if (!string.IsNullOrEmpty(muzzlePath))
+                {
+                    GameEntry.Juice?.PlayEffectAttachedToTransform(
+                        EffectEnum.加特林开火, Id, muzzlePath, data.Rotation);
+                    return;
+                }
             }
 
             GameEntry.Juice?.PlayEffect(EffectEnum.加特林开火, data.Position, data.Rotation);
@@ -144,6 +219,7 @@ namespace MainGame
             if (data != null)
             {
                 data.HitEffect = EffectEnum.加特林击中;
+                data.GatlingAttackSpeedBoost = true;
             }
         }
 
@@ -195,7 +271,7 @@ namespace MainGame
         protected override void OnEquipped()
         {
             base.OnEquipped();
-            ResetRamp();
+            ResetAttackSpeed();
         }
     }
 }

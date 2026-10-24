@@ -132,6 +132,15 @@ namespace MainGame
             set;
         }
 
+        /// <summary>
+        /// 命中敌人时为所属加特林武器叠加攻速。
+        /// </summary>
+        public bool GatlingAttackSpeedBoost
+        {
+            get;
+            set;
+        }
+
         public static BulletData Create(string bulletAssetName, int ownerEntityId, Vector3 position, Quaternion rotation,
             Vector3 direction, float damage, float speed, float explodeDelay = 0f, float stunDuration = 0f,
             BulletKind kind = BulletKind.Normal)
@@ -169,6 +178,7 @@ namespace MainGame
             ScatterStunDuration = 0f;
             KnockbackForce = 0f;
             HitEffect = EffectEnum.Unknown;
+            GatlingAttackSpeedBoost = false;
             Direction = Vector3.forward;
             BulletAssetName = null;
         }

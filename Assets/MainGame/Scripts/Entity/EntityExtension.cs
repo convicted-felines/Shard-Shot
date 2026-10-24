@@ -159,7 +159,9 @@ namespace MainGame
         /// 在目标实体头顶弹出一次性世界飘字（默认 <see cref="WorldUIEnum.普通字体1"/>）。
         /// </summary>
         public static void ShowWorldUIFloatingText(this EntityComponent entityComponent, int followEntityId, string displayText,
-            WorldUIEnum worldUIEnum = WorldUIEnum.普通字体1, float headOffsetY = 2.4f)
+            WorldUIEnum worldUIEnum = WorldUIEnum.普通字体1, float headOffsetY = 2.4f,
+            float scatterRadius = Constant.WorldUI.FloatingTextScatterRadius,
+            float scatterVertical = Constant.WorldUI.FloatingTextScatterVertical)
         {
             if (entityComponent == null || string.IsNullOrEmpty(displayText) || followEntityId == 0)
             {
@@ -174,21 +176,48 @@ namespace MainGame
             }
 
             Vector3 start = follow.CachedTransform.position + Vector3.up * headOffsetY;
-            entityComponent.ShowWorldUIFloatingText(start, displayText, worldUIEnum);
+            entityComponent.ShowWorldUIFloatingText(start, displayText, worldUIEnum, scatterRadius: scatterRadius, scatterVertical: scatterVertical);
         }
 
         /// <summary>
         /// 在世界坐标弹出一次性世界飘字（上浮后自动隐藏，默认 <see cref="WorldUIEnum.普通字体1"/>）。
         /// </summary>
         public static void ShowWorldUIFloatingText(this EntityComponent entityComponent, Vector3 worldPosition, string displayText,
-            WorldUIEnum worldUIEnum = WorldUIEnum.普通字体1, float duration = 1.2f, float riseDistance = 0.8f)
+            WorldUIEnum worldUIEnum = WorldUIEnum.普通字体1, float duration = 1.2f, float riseDistance = 0.8f,
+            float scatterRadius = Constant.WorldUI.FloatingTextScatterRadius,
+            float scatterVertical = Constant.WorldUI.FloatingTextScatterVertical)
         {
             if (entityComponent == null || string.IsNullOrEmpty(displayText))
             {
                 return;
             }
 
-            WorldUIData data = WorldUIData.CreateFloatingText(worldUIEnum, worldPosition, displayText, duration, riseDistance);
+            Vector3 scatterOffset = WorldUIData.CreateRandomScatterOffset(scatterRadius, scatterVertical);
+            WorldUIData data = WorldUIData.CreateFloatingText(
+                worldUIEnum, worldPosition, displayText, duration, riseDistance, scatterOffset: scatterOffset);
+            entityComponent.ShowWorldUI(data);
+        }
+
+        /// <summary>
+        /// 在目标实体上弹出一次性世界飘字（跟随实体上浮后自动隐藏）。
+        /// </summary>
+        public static void ShowWorldUIFloatingTextAttached(this EntityComponent entityComponent, int followEntityId,
+            Vector3 followOffset, string displayText, WorldUIEnum worldUIEnum = WorldUIEnum.普通字体1,
+            float duration = 1f, float riseDistance = 0.5f)
+        {
+            if (entityComponent == null || string.IsNullOrEmpty(displayText) || followEntityId == 0)
+            {
+                return;
+            }
+
+            if (entityComponent.GetGameEntity(followEntityId) == null)
+            {
+                Log.Warning("ShowWorldUIFloatingTextAttached: follow entity '{0}' not found.", followEntityId);
+                return;
+            }
+
+            WorldUIData data = WorldUIData.CreateAttachedFloatingText(
+                worldUIEnum, followEntityId, followOffset, displayText, duration, riseDistance);
             entityComponent.ShowWorldUI(data);
         }
     }

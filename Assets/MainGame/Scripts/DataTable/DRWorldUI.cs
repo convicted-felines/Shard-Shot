@@ -112,6 +112,10 @@ namespace MainGame
         /// 
         /// </summary>
         进度条红 = 3,
+        /// <summary>
+        /// 
+        /// </summary>
+        普通字体蓝灰 = 4,
     }
 
 

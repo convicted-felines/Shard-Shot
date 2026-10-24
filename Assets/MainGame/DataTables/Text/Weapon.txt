@@ -2,6 +2,6 @@
 #	Id		Name	AssetName	WeaponType	Damage	BaseAttackSpeed	AttackSpeed	AttackTiming	BulletAssetName	BulletSpeed	DamageCountdown
 #	int		string	string	string	float	float	float	float	string	float	float
 #	编号	策划备注	名称	资源名称	武器类型	伤害	基础攻击速度	攻击速度	攻击时机	子弹资源名称	子弹速度	伤害倒计时
-	1		加特林	加特林	远程	10	100	100	0.7	加特林子弹	18	0
-	2		榴弹炮	榴弹炮	远程	10	100	300	0.4	榴弹炮子弹	10	1
+	1		加特林	加特林	远程	10	100	200	0.7	加特林子弹	18	0
+	2		榴弹炮	榴弹炮	远程	30	100	150	0.4	榴弹炮子弹	10	2.5
 	3		骑士剑	骑士剑	近战	10	100	100	0.3		0	0

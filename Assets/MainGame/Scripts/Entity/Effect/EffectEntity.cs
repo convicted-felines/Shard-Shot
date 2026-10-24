@@ -13,6 +13,7 @@ namespace MainGame
         private ParticleSystem[] m_ParticleSystems;
         private float m_HideTimer;
         private bool m_AutoHideScheduled;
+        private bool m_AttachedToFollowTransform;
         private Quaternion m_AuthoredRotation;
 
         protected override void OnInit(object userData)
@@ -49,11 +50,25 @@ namespace MainGame
 
         protected override void OnHide(bool isShutdown, object userData)
         {
+            DetachFromFollowTransform();
             m_EffectData = null;
             m_ParticleSystems = null;
             m_HideTimer = 0f;
             m_AutoHideScheduled = false;
             base.OnHide(isShutdown, userData);
+        }
+
+        protected override void OnAttachTo(EntityLogic parentEntity, Transform parentTransform, object userData)
+        {
+            base.OnAttachTo(parentEntity, parentTransform, userData);
+
+            if (m_EffectData == null)
+            {
+                return;
+            }
+
+            CachedTransform.localPosition = m_EffectData.FollowOffset;
+            ApplyWorldRotationIfNeeded(true);
         }
 
         protected override void OnUpdate(float elapseSeconds, float realElapseSeconds)
@@ -68,6 +83,10 @@ namespace MainGame
             if (m_EffectData.FollowEntityId != 0)
             {
                 ApplyPose(false);
+            }
+            else if (m_EffectData.KeepWorldRotation)
+            {
+                ApplyWorldRotationIfNeeded(false);
             }
 
             if (!m_AutoHideScheduled)
@@ -86,6 +105,17 @@ namespace MainGame
         {
             if (m_EffectData == null)
             {
+                return;
+            }
+
+            if (UsesTransformAttach())
+            {
+                if (snapTransform)
+                {
+                    TryAttachToFollowTransform();
+                }
+
+                ApplyWorldRotationIfNeeded(snapTransform);
                 return;
             }
 
@@ -117,6 +147,57 @@ namespace MainGame
             {
                 CachedTransform.position = position;
             }
+        }
+
+        private bool UsesTransformAttach()
+        {
+            return m_EffectData != null
+                && m_EffectData.FollowEntityId != 0
+                && !string.IsNullOrEmpty(m_EffectData.FollowTransformPath);
+        }
+
+        private void TryAttachToFollowTransform()
+        {
+            if (m_AttachedToFollowTransform || m_EffectData == null || GameEntry.Entity == null)
+            {
+                return;
+            }
+
+            Entity follow = GameEntry.Entity.GetGameEntity(m_EffectData.FollowEntityId);
+            if (follow == null)
+            {
+                return;
+            }
+
+            GameEntry.Entity.AttachEntity(this, follow, m_EffectData.FollowTransformPath);
+            m_AttachedToFollowTransform = true;
+        }
+
+        private void ApplyWorldRotationIfNeeded(bool force)
+        {
+            if (m_EffectData == null || m_EffectData.UsePrefabRotation)
+            {
+                return;
+            }
+
+            if (!force && !m_EffectData.KeepWorldRotation)
+            {
+                return;
+            }
+
+            CachedTransform.rotation = m_EffectData.Rotation;
+        }
+
+        private void DetachFromFollowTransform()
+        {
+            if (!m_AttachedToFollowTransform || GameEntry.Entity == null)
+            {
+                m_AttachedToFollowTransform = false;
+                return;
+            }
+
+            GameEntry.Entity.DetachEntity(this);
+            m_AttachedToFollowTransform = false;
         }
 
         private void PlayParticles()

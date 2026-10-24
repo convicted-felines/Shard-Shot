@@ -2,5 +2,5 @@
 #	Id		Name	AssetName	UIGroupName	AllowMultiInstance	PauseCoveredUIForm
 #	int		string	string	string	bool	bool
 #	界面编号	策划备注	名称	资源名称	界面组名称	是否允许多个界面实例	是否隐藏被其覆盖的界面
-	100	主界面	主界面	MenuForm	Default	FALSE	FALSE
+	100	主界面	主界面	MenuForm	Game	FALSE	FALSE
 	101	设置界面	设置界面	SettingForm	Default	FALSE	FALSE

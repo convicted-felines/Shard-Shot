@@ -94,6 +94,23 @@ namespace MainGame
         }
 
         /// <summary>
+        /// 附着到目标实体的子节点，并保持世界朝向（如枪口火焰跟随枪口动画且 Z 轴对准开火方向）。
+        /// </summary>
+        public static void ShowEffectAttachedToTransform(this EntityComponent entityComponent, EffectEnum effectEnum,
+            int followEntityId, string followTransformPath, Quaternion worldRotation, Vector3 localOffset = default)
+        {
+            if (entityComponent == null || effectEnum == EffectEnum.Unknown || followEntityId == 0
+                || string.IsNullOrEmpty(followTransformPath))
+            {
+                return;
+            }
+
+            EffectData data = EffectData.CreateAttachedToTransform(
+                effectEnum, followEntityId, followTransformPath, worldRotation, localOffset);
+            entityComponent.ShowEffect(data);
+        }
+
+        /// <summary>
         /// 附着于目标实体播放特效，旋转保持 Prefab 初始朝向。
         /// </summary>
         /// <returns>特效实体 Id；创建失败时返回 0。</returns>

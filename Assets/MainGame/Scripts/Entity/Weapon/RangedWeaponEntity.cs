@@ -86,14 +86,14 @@ namespace MainGame
                 return;
             }
 
-            OnBulletSpawned(data);
+            OnBulletSpawned(data, muzzle);
             GameEntry.Entity.ShowBullet(data);
         }
 
         /// <summary>
-        /// 子弹实体创建前回调，子类可覆写以播放开火特效等。
+        /// 子弹实体创建后回调，子类可覆写以播放开火特效等。
         /// </summary>
-        protected virtual void OnBulletSpawned(BulletData data)
+        protected virtual void OnBulletSpawned(BulletData data, Transform muzzle)
         {
         }
 

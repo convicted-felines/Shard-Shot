@@ -60,6 +60,8 @@ namespace MainGame
                 return;
             }
 
+            TickGatlingDecay(rangedWeapon, elapseSeconds);
+
             if (interruptAttack)
             {
                 ResetAttackState();
@@ -81,7 +83,6 @@ namespace MainGame
             }
 
             UpdateFacing(facingTarget, facingWorldPosition, elapseSeconds);
-            TickGatlingRamp(rangedWeapon, elapseSeconds, wantsAttack, interruptAttack);
 
             m_AttackElapsed += elapseSeconds;
             if (!m_HasFiredThisCycle && m_AttackElapsed >= m_AttackFireDelay)
@@ -151,24 +152,11 @@ namespace MainGame
             return weaponConfig.AttackSpeed;
         }
 
-        private void TickGatlingRamp(
-            RangedWeaponEntity rangedWeapon,
-            float elapseSeconds,
-            bool wantsAttack,
-            bool interruptAttack)
+        private static void TickGatlingDecay(RangedWeaponEntity rangedWeapon, float elapseSeconds)
         {
             if (rangedWeapon is GatlingWeaponEntity gatling)
             {
-                bool isStationaryAttacking = m_IsAttacking && wantsAttack && !interruptAttack;
-                gatling.TickRamp(elapseSeconds, isStationaryAttacking);
-            }
-        }
-
-        private void ResetGatlingRamp()
-        {
-            if (m_WeaponComponent?.CurrentWeaponEntity is GatlingWeaponEntity gatling)
-            {
-                gatling.ResetRamp();
+                gatling.TickDecay(elapseSeconds);
             }
         }
 
@@ -202,8 +190,6 @@ namespace MainGame
 
         private void ResetAttackState()
         {
-            ResetGatlingRamp();
-
             bool wasAttacking = m_IsAttacking;
             m_IsAttacking = false;
             m_HasFiredThisCycle = false;

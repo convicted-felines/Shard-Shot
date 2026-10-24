@@ -86,6 +86,13 @@ namespace MainGame
             set;
         }
 
+        /// <summary>飘字生成时的随机散布偏移（世界空间）。</summary>
+        public Vector3 FloatScatterOffset
+        {
+            get;
+            set;
+        }
+
         public bool IsFloatingText
         {
             get { return FloatDuration > 0f; }
@@ -105,6 +112,7 @@ namespace MainGame
             data.DisplayText = null;
             data.FloatDuration = 0f;
             data.FloatRiseDistance = 0f;
+            data.FloatScatterOffset = Vector3.zero;
             data.Position = Vector3.zero;
             data.Rotation = Quaternion.identity;
             return data;
@@ -124,9 +132,25 @@ namespace MainGame
             data.DisplayText = null;
             data.FloatDuration = 0f;
             data.FloatRiseDistance = 0f;
+            data.FloatScatterOffset = Vector3.zero;
             data.Position = position;
             data.Rotation = rotation;
             return data;
+        }
+
+        /// <summary>在水平圆盘内随机散布偏移，用于避免多条飘字重叠。</summary>
+        public static Vector3 CreateRandomScatterOffset(float horizontalRadius, float verticalHalfRange = 0f)
+        {
+            if (horizontalRadius <= 0f && verticalHalfRange <= 0f)
+            {
+                return Vector3.zero;
+            }
+
+            Vector2 disk = Random.insideUnitCircle;
+            float x = horizontalRadius > 0f ? disk.x * horizontalRadius : 0f;
+            float z = horizontalRadius > 0f ? disk.y * horizontalRadius : 0f;
+            float y = verticalHalfRange > 0f ? Random.Range(-verticalHalfRange, verticalHalfRange) : 0f;
+            return new Vector3(x, y, z);
         }
 
         /// <summary>角色血条：跟随角色实体，固定世界 Y，XZ 随角色或击飞布偶臀部。</summary>
@@ -142,12 +166,25 @@ namespace MainGame
 
         /// <summary>一次性飘字：生成在世界坐标，上浮后自动隐藏。</summary>
         public static WorldUIData CreateFloatingText(WorldUIEnum worldUIEnum, Vector3 startPosition, string displayText,
-            float duration = 1.2f, float riseDistance = 0.8f, bool faceCamera = true)
+            float duration = 1.2f, float riseDistance = 0.8f, bool faceCamera = true, Vector3 scatterOffset = default)
         {
             WorldUIData data = Create(worldUIEnum, startPosition, Quaternion.identity, faceCamera);
             data.DisplayText = displayText;
             data.FloatDuration = Mathf.Max(0.01f, duration);
             data.FloatRiseDistance = Mathf.Max(0f, riseDistance);
+            data.FloatScatterOffset = scatterOffset;
+            return data;
+        }
+
+        /// <summary>附着在目标实体上的飘字：跟随实体位置上浮后自动隐藏。</summary>
+        public static WorldUIData CreateAttachedFloatingText(WorldUIEnum worldUIEnum, int followEntityId, Vector3 followOffset,
+            string displayText, float duration = 1f, float riseDistance = 0.5f, bool faceCamera = true, Vector3 scatterOffset = default)
+        {
+            WorldUIData data = Create(worldUIEnum, followEntityId, followOffset, faceCamera);
+            data.DisplayText = displayText;
+            data.FloatDuration = Mathf.Max(0.01f, duration);
+            data.FloatRiseDistance = Mathf.Max(0f, riseDistance);
+            data.FloatScatterOffset = scatterOffset;
             return data;
         }
 
@@ -163,6 +200,7 @@ namespace MainGame
             DisplayText = null;
             FloatDuration = 0f;
             FloatRiseDistance = 0f;
+            FloatScatterOffset = Vector3.zero;
         }
     }
 }

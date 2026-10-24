@@ -27,6 +27,20 @@ namespace MainGame
             set;
         }
 
+        /// <summary>跟随实体上的子节点路径；空表示跟随实体根。</summary>
+        public string FollowTransformPath
+        {
+            get;
+            set;
+        }
+
+        /// <summary>附着子节点时每帧保持 <see cref="Rotation"/> 世界朝向（如枪口火焰对准水平开火方向）。</summary>
+        public bool KeepWorldRotation
+        {
+            get;
+            set;
+        }
+
         /// <summary>来自特效表的垂直偏移（世界 Y）。</summary>
         public float EffectHeight
         {
@@ -94,12 +108,24 @@ namespace MainGame
             data.SetTypeId((int)effectEnum);
             data.FollowEntityId = followEntityId;
             data.FollowOffset = followOffset;
+            data.FollowTransformPath = null;
+            data.KeepWorldRotation = false;
             data.EffectHeight = 0f;
             data.AutoHideDuration = 0f;
             data.Position = Vector3.zero;
             data.Rotation = Quaternion.identity;
             data.UsePrefabRotation = false;
             data.DisableAutoHide = false;
+            return data;
+        }
+
+        public static EffectData CreateAttachedToTransform(EffectEnum effectEnum, int followEntityId,
+            string followTransformPath, Quaternion worldRotation, Vector3 localOffset = default)
+        {
+            EffectData data = CreateAttached(effectEnum, followEntityId, localOffset);
+            data.FollowTransformPath = followTransformPath;
+            data.Rotation = worldRotation;
+            data.KeepWorldRotation = true;
             return data;
         }
 
@@ -117,6 +143,8 @@ namespace MainGame
             base.Clear();
             FollowEntityId = 0;
             FollowOffset = Vector3.zero;
+            FollowTransformPath = null;
+            KeepWorldRotation = false;
             EffectHeight = 0f;
             AutoHideDuration = 0f;
             UsePrefabRotation = false;

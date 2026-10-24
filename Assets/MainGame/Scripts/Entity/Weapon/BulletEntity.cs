@@ -119,6 +119,7 @@ namespace MainGame
                 CachedTransform.position))
             {
                 PlayHitEffect();
+                NotifyGatlingAttackSpeedBoost();
 
                 if (m_BulletData.Kind == BulletKind.Lead)
                 {
@@ -169,6 +170,7 @@ namespace MainGame
                     kind: BulletKind.Scatter);
                 scatterData.IgnoreCharacterEntityId = ignoreEntityId;
                 scatterData.HitEffect = m_BulletData.HitEffect;
+                scatterData.GatlingAttackSpeedBoost = m_BulletData.GatlingAttackSpeedBoost;
                 GameEntry.Entity.ShowBullet(scatterData);
             }
         }
@@ -181,6 +183,26 @@ namespace MainGame
             }
 
             GameEntry.Juice?.PlayEffect(m_BulletData.HitEffect, CachedTransform.position);
+        }
+
+        private void NotifyGatlingAttackSpeedBoost()
+        {
+            if (m_BulletData == null || !m_BulletData.GatlingAttackSpeedBoost)
+            {
+                return;
+            }
+
+            CharacterEntity owner = GameEntry.Entity.GetGameEntity(m_BulletData.OwnerEntityId) as CharacterEntity;
+            if (owner == null)
+            {
+                return;
+            }
+
+            CharacterWeaponComponent weaponComponent = owner.GetComponent<CharacterWeaponComponent>();
+            if (weaponComponent?.CurrentWeaponEntity is GatlingWeaponEntity gatling)
+            {
+                gatling.OnEnemyHit();
+            }
         }
 
         private static int ResolveCharacterEntityId(Collider collider)

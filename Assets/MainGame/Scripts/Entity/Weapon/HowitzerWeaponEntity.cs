@@ -33,6 +33,27 @@ namespace MainGame
 
         private Coroutine m_BurstCoroutine;
 
+        protected override void OnBulletSpawned(BulletData data, Transform muzzle)
+        {
+            if (data == null)
+            {
+                return;
+            }
+
+            if (muzzle != null)
+            {
+                string muzzlePath = TransformUtility.GetRelativeTransformPath(CachedTransform, muzzle);
+                if (!string.IsNullOrEmpty(muzzlePath))
+                {
+                    GameEntry.Juice?.PlayEffectAttachedToTransform(
+                        EffectEnum.榴弹炮开火, Id, muzzlePath, data.Rotation);
+                    return;
+                }
+            }
+
+            GameEntry.Juice?.PlayEffect(EffectEnum.榴弹炮开火, data.Position, data.Rotation);
+        }
+
         public override void FireBullet()
         {
             base.FireBullet();

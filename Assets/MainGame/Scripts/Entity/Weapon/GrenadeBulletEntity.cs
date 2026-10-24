@@ -5,7 +5,7 @@ using UnityGameFramework.Runtime;
 namespace MainGame
 {
     /// <summary>
-    /// 榴弹实体：刚体飞行、碰撞弹跳，引信结束后爆炸并对范围内敌对角色造成伤害与击飞布偶效果。
+    /// 榴弹实体：刚体飞行、碰撞弹跳；命中敌对单位后短延迟爆炸，否则引信结束后爆炸，并对范围内敌对角色造成伤害与击飞布偶效果。
     /// </summary>
     public sealed class GrenadeBulletEntity : Entity
     {
@@ -25,6 +25,14 @@ namespace MainGame
         [Tooltip("引信时间随机偏移上限（秒），实际爆炸时间为 DamageCountdown ± 该值")]
         private float m_ExplodeDelayRandomOffset = 0.3f;
 
+        [SerializeField]
+        [Tooltip("命中敌对单位后爆炸延迟下限（秒）")]
+        private float m_ContactExplodeDelayMin = 0.1f;
+
+        [SerializeField]
+        [Tooltip("命中敌对单位后爆炸延迟上限（秒）")]
+        private float m_ContactExplodeDelayMax = 0.2f;
+
         private static readonly List<UnityGameFramework.Runtime.Entity> s_EntityBuffer =
             new List<UnityGameFramework.Runtime.Entity>(32);
 
@@ -34,7 +42,10 @@ namespace MainGame
         private float m_ElapsedLifetime;
         private float m_FuseElapsed;
         private float m_ActualExplodeDelay;
+        private float m_ContactFuseElapsed;
+        private float m_ContactExplodeDelay;
         private bool m_HasExploded;
+        private bool m_IsContactTriggered;
 
         protected override void OnShow(object userData)
         {
@@ -85,8 +96,11 @@ namespace MainGame
             IgnoreOwnerCollisions();
             m_ElapsedLifetime = 0f;
             m_FuseElapsed = 0f;
+            m_ContactFuseElapsed = 0f;
+            m_ContactExplodeDelay = 0f;
             m_ActualExplodeDelay = ResolveExplodeDelay(m_BulletData.ExplodeDelay);
             m_HasExploded = false;
+            m_IsContactTriggered = false;
         }
 
         protected override void OnHide(bool isShutdown, object userData)
@@ -102,8 +116,11 @@ namespace MainGame
             m_Collider = null;
             m_ElapsedLifetime = 0f;
             m_FuseElapsed = 0f;
+            m_ContactFuseElapsed = 0f;
+            m_ContactExplodeDelay = 0f;
             m_ActualExplodeDelay = 0f;
             m_HasExploded = false;
+            m_IsContactTriggered = false;
             base.OnHide(isShutdown, userData);
         }
 
@@ -123,11 +140,92 @@ namespace MainGame
                 return;
             }
 
+            if (m_IsContactTriggered)
+            {
+                m_ContactFuseElapsed += elapseSeconds;
+                if (m_ContactFuseElapsed >= m_ContactExplodeDelay)
+                {
+                    Explode();
+                }
+
+                return;
+            }
+
             m_FuseElapsed += elapseSeconds;
             if (m_FuseElapsed >= m_ActualExplodeDelay)
             {
                 Explode();
             }
+        }
+
+        private void OnCollisionEnter(Collision collision)
+        {
+            if (m_BulletData == null || m_HasExploded || m_IsContactTriggered || collision == null)
+            {
+                return;
+            }
+
+            if (!TryGetHostileCharacter(collision.collider, out _))
+            {
+                return;
+            }
+
+            ArmContactExplosion();
+        }
+
+        private void ArmContactExplosion()
+        {
+            float minDelay = Mathf.Max(0f, m_ContactExplodeDelayMin);
+            float maxDelay = Mathf.Max(minDelay, m_ContactExplodeDelayMax);
+            m_ContactExplodeDelay = Random.Range(minDelay, maxDelay);
+            m_ContactFuseElapsed = 0f;
+            m_IsContactTriggered = true;
+        }
+
+        private bool TryGetHostileCharacter(Collider collider, out CharacterEntity character)
+        {
+            character = ResolveCharacterFromCollider(collider);
+            if (character == null || character.Id == m_BulletData.OwnerEntityId)
+            {
+                character = null;
+                return false;
+            }
+
+            CharacterEntity owner = m_BulletData.OwnerEntityId != 0
+                ? GameEntry.Entity.GetGameEntity(m_BulletData.OwnerEntityId) as CharacterEntity
+                : null;
+            CharacterFaction ownerFaction = owner != null ? owner.Faction : CharacterFaction.Player;
+            if (!CharacterFactionUtility.IsHostile(ownerFaction, character.Faction))
+            {
+                character = null;
+                return false;
+            }
+
+            if (character is IDamageable damageable && !damageable.IsAlive)
+            {
+                character = null;
+                return false;
+            }
+
+            return true;
+        }
+
+        private static CharacterEntity ResolveCharacterFromCollider(Collider collider)
+        {
+            if (collider == null || GameEntry.Entity == null)
+            {
+                return null;
+            }
+
+            RagdollOwnerDamageProxy ragdollProxy = collider.GetComponent<RagdollOwnerDamageProxy>();
+            if (ragdollProxy != null && ragdollProxy.OwnerEntityId != 0)
+            {
+                return GameEntry.Entity.GetGameEntity(ragdollProxy.OwnerEntityId) as CharacterEntity;
+            }
+
+            CharacterDamageReceiver receiver = collider.GetComponent<CharacterDamageReceiver>();
+            int entityId = receiver != null ? receiver.GetCharacterEntityId() : 0;
+            return entityId != 0 ? GameEntry.Entity.GetGameEntity(entityId) as CharacterEntity : null;
         }
 
         private float ResolveExplodeDelay(float baseDelay)
@@ -203,15 +301,32 @@ namespace MainGame
 
                 if (character is MonsterCharacterEntity monster)
                 {
-                    monster.ApplyExplosionHit(m_BulletData.Damage, m_BulletData.OwnerEntityId, center, scatterForce);
+                    if (monster.IsAlive)
+                    {
+                        monster.ApplyExplosionHit(m_BulletData.Damage, m_BulletData.OwnerEntityId, center, scatterForce);
+                        PlayHowitzerDamageEffect(character);
+                    }
+
                     continue;
                 }
 
                 if (character is IDamageable damageable && damageable.IsAlive)
                 {
                     damageable.TakeDamage(m_BulletData.Damage, m_BulletData.OwnerEntityId);
+                    PlayHowitzerDamageEffect(character);
                 }
             }
+        }
+
+        private static void PlayHowitzerDamageEffect(CharacterEntity character)
+        {
+            if (character == null)
+            {
+                return;
+            }
+
+            character.TryGetCombatWorldPosition(out Vector3 position);
+            GameEntry.Juice?.PlayEffectAtPrefabRotation(EffectEnum.榴弹炮伤害, position);
         }
 
         private void IgnoreOwnerCollisions()
