@@ -34,11 +34,6 @@ namespace MainGame
 
             InitializeHealth();
 
-            if (Rigidbody != null)
-            {
-                CharacterRigidbodyUtility.SetupTopDownMovement(Rigidbody);
-            }
-
             SetupDamageReceivers(this, this);
             SetupCombat();
             EquipDefaultWeapon();
@@ -142,8 +137,8 @@ namespace MainGame
                 return;
             }
 
-            m_KnockdownComponent?.Clear();
             SetKnockdownPresentationActive(true);
+            m_KnockdownComponent?.Clear();
             SpawnDeathRagdollAndHide(LastAttackerEntityId, forceOrigin, scatterForce);
             Log.Info("Monster character '{0}' destroyed.", Name);
         }

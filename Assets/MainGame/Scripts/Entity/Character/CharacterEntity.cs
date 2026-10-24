@@ -63,7 +63,7 @@ namespace MainGame
             }
 
             CacheRenderers();
-            CharacterRigidbodyUtility.SyncRigidbodyToTransform(m_Rigidbody);
+            PrepareSpawnState();
 
             Name = m_DRCharacter != null ? m_DRCharacter.Name : Utility.Text.Format("Character_{0}", Id);
         }
@@ -99,6 +99,7 @@ namespace MainGame
             ClearInvincibilityFlash();
             ClearKnockdownDim();
             RestoreRenderersIfSuppressed();
+            ResetPhysicalStateForPool();
             m_CharacterData = null;
             m_DRCharacter = null;
             m_Rigidbody = null;
@@ -350,21 +351,125 @@ namespace MainGame
             }
         }
 
-        private void SetCollidersEnabled(bool enabled)
+        /// <summary>
+        /// 击飞起身或实体复用后，确保俯视角移动刚体已恢复（非 kinematic、约束与速度同步）。
+        /// </summary>
+        public void EnsureMovementPhysicsReady()
         {
-            if (m_CachedColliders == null)
+            if (m_Rigidbody == null)
+            {
+                m_Rigidbody = GetComponent<Rigidbody>();
+                if (m_Rigidbody == null)
+                {
+                    m_Rigidbody = GetComponentInChildren<Rigidbody>();
+                }
+            }
+
+            if (m_Rigidbody == null)
             {
                 return;
             }
 
-            for (int i = 0; i < m_CachedColliders.Length; i++)
+            SetCollidersEnabled(true);
+            CharacterRigidbodyUtility.SetupTopDownMovement(m_Rigidbody);
+        }
+
+        /// <summary>
+        /// 对象池复用前：强制恢复刚体、碰撞体、渲染与 Animator，避免击飞/死亡残留状态带入下一次 OnShow。
+        /// </summary>
+        protected void ResetPhysicalStateForPool()
+        {
+            Rigidbody rigidbody = m_Rigidbody != null
+                ? m_Rigidbody
+                : GetComponent<Rigidbody>() ?? GetComponentInChildren<Rigidbody>();
+            if (rigidbody != null)
             {
-                Collider collider = m_CachedColliders[i];
+                CharacterRigidbodyUtility.SetupTopDownMovement(rigidbody);
+            }
+
+            Collider[] colliders = GetCharacterColliders();
+            for (int i = 0; i < colliders.Length; i++)
+            {
+                Collider collider = colliders[i];
+                if (collider != null)
+                {
+                    collider.enabled = true;
+                }
+            }
+
+            ForceEnableAllRenderers();
+
+            Animator animator = m_CachedAnimator != null
+                ? m_CachedAnimator
+                : GetComponentInChildren<Animator>();
+            if (animator != null)
+            {
+                animator.enabled = true;
+                animator.applyRootMotion = false;
+            }
+        }
+
+        /// <summary>
+        /// 对象池取出后：同步刚体、重置 Animator 与 Speed，避免沿用上一次实例的动画/骨骼姿态。
+        /// </summary>
+        protected void PrepareSpawnState()
+        {
+            EnsureMovementPhysicsReady();
+
+            if (m_CachedAnimator == null)
+            {
+                return;
+            }
+
+            m_CachedAnimator.enabled = true;
+            m_CachedAnimator.applyRootMotion = false;
+            m_CachedAnimator.Rebind();
+            m_CachedAnimator.Update(0f);
+            m_CachedAnimator.SetFloat(SpeedParamHash, 0f);
+        }
+
+        private Collider[] GetCharacterColliders()
+        {
+            return m_CachedColliders != null
+                ? m_CachedColliders
+                : GetComponentsInChildren<Collider>(true);
+        }
+
+        private void SetCollidersEnabled(bool enabled)
+        {
+            Collider[] colliders = GetCharacterColliders();
+            for (int i = 0; i < colliders.Length; i++)
+            {
+                Collider collider = colliders[i];
                 if (collider != null)
                 {
                     collider.enabled = enabled;
                 }
             }
+        }
+
+        private void ForceEnableAllRenderers()
+        {
+            if (m_CachedRenderers == null)
+            {
+                CacheRenderers();
+            }
+
+            if (m_CachedRenderers == null)
+            {
+                return;
+            }
+
+            for (int i = 0; i < m_CachedRenderers.Length; i++)
+            {
+                Renderer renderer = m_CachedRenderers[i];
+                if (renderer != null)
+                {
+                    renderer.enabled = true;
+                }
+            }
+
+            m_CachedRendererEnabled = null;
         }
 
         /// <summary>
@@ -382,6 +487,7 @@ namespace MainGame
         {
             TryGetCombatWorldPosition(out Vector3 position);
             GameEntry.Sound.PlaySound(SoundEnum.角色死亡, position);
+            GameEntry.Juice?.OnCharacterDeath(position);
         }
 
         protected struct DeathRagdollSettings

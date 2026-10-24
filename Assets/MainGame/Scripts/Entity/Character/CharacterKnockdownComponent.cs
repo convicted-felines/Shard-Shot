@@ -101,11 +101,16 @@ namespace MainGame
 
         public void Clear()
         {
-            if (IsKnockedDown && m_Owner != null)
+            if (m_Owner != null)
             {
-                TransferWeaponBackToCharacter();
+                if (IsKnockedDown)
+                {
+                    TransferWeaponBackToCharacter();
+                    m_Owner.SetAnimatorEnabledForPoseBlend(true);
+                }
+
                 m_Owner.SetKnockdownPresentationActive(true);
-                m_Owner.SetAnimatorEnabledForPoseBlend(true);
+                m_Owner.EnsureMovementPhysicsReady();
             }
 
             HideActiveRagdollIfAny();
@@ -194,17 +199,24 @@ namespace MainGame
 
             m_Owner.SetKnockdownPresentationActive(false);
             int ragdollEntityId = m_Owner.SpawnKnockdownRagdoll(attackerEntityId, scatterForce, forceOriginWorld);
+            if (ragdollEntityId == 0)
+            {
+                m_Phase = KnockdownPhase.None;
+                m_Owner.SetKnockdownPresentationActive(true);
+                m_Owner.EnsureMovementPhysicsReady();
+                return false;
+            }
+
             m_ActiveRagdollEntityId = ragdollEntityId;
             TryTransferWeaponToRagdoll();
 
             if (m_Options.FollowCameraWithRagdoll
-                && ragdollEntityId != 0
                 && TopDownFollowCameraEntity.TryGetActive(out TopDownFollowCameraEntity camera))
             {
                 camera.SetFollowEntity(ragdollEntityId);
             }
 
-            return ragdollEntityId != 0;
+            return true;
         }
 
         /// <summary>击飞布偶阶段将隐藏的角色根节点同步到布偶位置（爆炸范围、飘字等依赖实体坐标）。</summary>
@@ -269,17 +281,24 @@ namespace MainGame
             m_Owner.SetAnimatorEnabledForPoseBlend(false);
             m_Owner.SetKnockdownPresentationActive(false);
             int ragdollEntityId = m_Owner.SpawnKnockdownRagdoll(attackerEntityId, scatterForce, forceOriginWorld);
+            if (ragdollEntityId == 0)
+            {
+                m_Phase = KnockdownPhase.None;
+                m_Owner.SetKnockdownPresentationActive(true);
+                m_Owner.EnsureMovementPhysicsReady();
+                return false;
+            }
+
             m_ActiveRagdollEntityId = ragdollEntityId;
             TryTransferWeaponToRagdoll();
 
             if (m_Options.FollowCameraWithRagdoll
-                && ragdollEntityId != 0
                 && TopDownFollowCameraEntity.TryGetActive(out TopDownFollowCameraEntity camera))
             {
                 camera.SetFollowEntity(ragdollEntityId);
             }
 
-            return ragdollEntityId != 0;
+            return true;
         }
 
         private void RefreshTimingFromConfig()
@@ -476,9 +495,15 @@ namespace MainGame
             m_InvincibleTotalDuration = m_InvincibleRemaining;
             ClearPoseSnapshots();
 
-            if (m_InvincibleRemaining > 0f && m_Owner != null)
+            if (m_Owner != null)
             {
-                CharacterInvincibilityFlashComponent.Ensure(m_Owner)?.OnPostGetUpInvincibilityBegan();
+                m_Owner.SetKnockdownPresentationActive(true);
+                m_Owner.EnsureMovementPhysicsReady();
+
+                if (m_InvincibleRemaining > 0f)
+                {
+                    CharacterInvincibilityFlashComponent.Ensure(m_Owner)?.OnPostGetUpInvincibilityBegan();
+                }
             }
         }
 

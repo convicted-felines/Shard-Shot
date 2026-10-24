@@ -31,8 +31,10 @@ namespace MainGame
             SyncRigidbodyToTransform(rigidbody);
             rigidbody.isKinematic = false;
             rigidbody.useGravity = false;
+            rigidbody.detectCollisions = true;
             rigidbody.constraints = RigidbodyConstraints.FreezeRotation | RigidbodyConstraints.FreezePositionY;
             rigidbody.interpolation = RigidbodyInterpolation.Interpolate;
+            rigidbody.WakeUp();
         }
 
         public static void ApplyPlanarVelocity(Rigidbody rigidbody, Vector3 planarVelocity)
@@ -44,6 +46,11 @@ namespace MainGame
 
             planarVelocity.y = 0f;
             rigidbody.angularVelocity = Vector3.zero;
+            if (rigidbody.IsSleeping())
+            {
+                rigidbody.WakeUp();
+            }
+
             rigidbody.velocity = planarVelocity;
         }
 

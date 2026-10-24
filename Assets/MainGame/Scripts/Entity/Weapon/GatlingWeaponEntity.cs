@@ -172,6 +172,11 @@ namespace MainGame
         public override void FireBullet()
         {
             GameEntry.Sound.PlaySound(SoundEnum.加特林开火, this);
+            if (Owner != null)
+            {
+                GameEntry.Juice?.OnWeaponFire(WeaponEnum.加特林, Owner.CachedTransform.position);
+            }
+
             base.FireBullet();
         }
 

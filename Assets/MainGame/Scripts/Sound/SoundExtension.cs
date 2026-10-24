@@ -18,6 +18,29 @@ namespace MainGame
         private const float FadeVolumeDuration = 1f;
         private static int? s_MusicSerialId = null;
 
+        /// <summary>
+        /// 与 UGF DefaultSoundAgentHelper 中 3D 音效 minDistance 一致。
+        /// </summary>
+        public const float SpatialMinDistance = 5f;
+
+        /// <summary>
+        /// 对数距离衰减（与 Unity AudioSource Logarithmic 模式一致）。
+        /// </summary>
+        public static float EvaluateLogarithmicAttenuation(float distance, float minDistance, float maxDistance)
+        {
+            if (distance <= minDistance)
+            {
+                return 1f;
+            }
+
+            if (distance >= maxDistance)
+            {
+                return 0f;
+            }
+
+            return minDistance / distance;
+        }
+
         public static int? PlayMusic(this SoundComponent soundComponent, int musicId, object userData = null)
         {
             soundComponent.StopMusic();

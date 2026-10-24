@@ -29,6 +29,10 @@ namespace MainGame
             m_KnockbackComponent = owner != null ? owner.GetComponent<CharacterKnockbackComponent>() : null;
             m_Animator = animator;
             m_AnimatorSpeed = 0f;
+            if (m_Animator != null)
+            {
+                m_Animator.SetFloat(SpeedParamHash, 0f);
+            }
         }
 
         public void Tick(float elapseSeconds)
@@ -101,6 +105,11 @@ namespace MainGame
 
         private void ApplyMovementVelocity(Rigidbody rigidbody, Vector3 intendedPlanarVelocity)
         {
+            if (rigidbody.isKinematic && m_Owner != null)
+            {
+                m_Owner.EnsureMovementPhysicsReady();
+            }
+
             if (m_KnockbackComponent != null)
             {
                 m_KnockbackComponent.ApplyToRigidbody(rigidbody, intendedPlanarVelocity);

@@ -474,6 +474,24 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 628df3a0d6e978c4996534c18003e0b8, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  m_ShakeMinDistance: 5
+  m_ShakeMaxDistance: 100
+  m_ExplosionShakeAmplitude: 1
+  m_ExplosionShakeDuration: 0.1
+  m_ExplosionShakeFrequency: 28
+  m_GatlingFireShakeAmplitude: 0.4
+  m_GatlingFireShakeDuration: 0.04
+  m_GatlingFireShakeFrequency: 40
+  m_DeathShakeAmplitude: 0.8
+  m_DeathShakeDuration: 0.08
+  m_DeathShakeFrequency: 28
+  m_SpawnMaxAliveCount: 40
+  m_SpawnBound: 20
+  m_SpawnIntervalInitial: 5
+  m_SpawnIntervalMin: 0.5
+  m_SpawnAccelerationDuration: 20
+  m_SpawnWaveInterval: 10
+  m_SpawnBurstInterval: 0.08
 --- !u!1 &2101073572
 GameObject:
   m_ObjectHideFlags: 0

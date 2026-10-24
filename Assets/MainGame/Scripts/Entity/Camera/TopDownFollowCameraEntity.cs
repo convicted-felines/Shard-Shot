@@ -25,6 +25,41 @@ namespace MainGame
         private Transform m_FollowTarget;
         private Camera m_Camera;
         private Quaternion m_FixedRotation;
+        private Vector3 m_SmoothFollowPosition;
+        private readonly List<ShakeImpulse> m_ShakeImpulses = new List<ShakeImpulse>(4);
+
+        private struct ShakeImpulse
+        {
+            public float Amplitude;
+            public float Duration;
+            public float Frequency;
+            public float Elapsed;
+            public float SeedX;
+            public float SeedY;
+            public float SeedZ;
+        }
+
+        /// <summary>
+        /// 叠加一次衰减 Perlin 震屏。
+        /// </summary>
+        public void AddImpulse(float amplitude, float duration, float frequency = 25f)
+        {
+            if (amplitude <= 0f || duration <= 0f)
+            {
+                return;
+            }
+
+            m_ShakeImpulses.Add(new ShakeImpulse
+            {
+                Amplitude = amplitude,
+                Duration = duration,
+                Frequency = frequency,
+                Elapsed = 0f,
+                SeedX = Random.Range(0f, 100f),
+                SeedY = Random.Range(0f, 100f),
+                SeedZ = Random.Range(0f, 100f),
+            });
+        }
 
         /// <summary>
         /// 切换跟随实体；布偶实体会优先跟随其 BoneRoot（RagBoneRoot）。
@@ -88,6 +123,8 @@ namespace MainGame
 
             Name = "TopDownFollowCamera";
             CachedTransform.rotation = m_FixedRotation;
+            m_SmoothFollowPosition = CachedTransform.position;
+            m_ShakeImpulses.Clear();
             TryBindFollowTarget();
             GameEntry.Sound.RefreshBuiltInAudioListener();
         }
@@ -103,6 +140,7 @@ namespace MainGame
             m_FollowEntityId = 0;
             m_FollowTarget = null;
             m_Camera = null;
+            m_ShakeImpulses.Clear();
             base.OnHide(isShutdown, userData);
         }
 
@@ -120,11 +158,42 @@ namespace MainGame
             }
 
             Vector3 desiredPosition = m_FollowTarget.position + m_FollowOffset;
-            CachedTransform.position = Vector3.Lerp(
-                CachedTransform.position,
+            m_SmoothFollowPosition = Vector3.Lerp(
+                m_SmoothFollowPosition,
                 desiredPosition,
                 m_FollowSmoothSpeed * elapseSeconds);
+            CachedTransform.position = m_SmoothFollowPosition + UpdateAndGetShakeOffset(elapseSeconds);
             CachedTransform.rotation = m_FixedRotation;
+        }
+
+        private Vector3 UpdateAndGetShakeOffset(float deltaTime)
+        {
+            if (m_ShakeImpulses.Count == 0)
+            {
+                return Vector3.zero;
+            }
+
+            Vector3 offset = Vector3.zero;
+            for (int i = m_ShakeImpulses.Count - 1; i >= 0; i--)
+            {
+                ShakeImpulse impulse = m_ShakeImpulses[i];
+                impulse.Elapsed += deltaTime;
+                if (impulse.Elapsed >= impulse.Duration)
+                {
+                    m_ShakeImpulses.RemoveAt(i);
+                    continue;
+                }
+
+                float decay = 1f - impulse.Elapsed / impulse.Duration;
+                float t = impulse.Elapsed * impulse.Frequency;
+                float amp = impulse.Amplitude * decay;
+                offset.x += (Mathf.PerlinNoise(impulse.SeedX + t, 0f) - 0.5f) * 2f * amp;
+                offset.y += (Mathf.PerlinNoise(impulse.SeedY + t, 0f) - 0.5f) * 2f * amp * 0.35f;
+                offset.z += (Mathf.PerlinNoise(impulse.SeedZ + t, 0f) - 0.5f) * 2f * amp;
+                m_ShakeImpulses[i] = impulse;
+            }
+
+            return offset;
         }
 
         private Quaternion ComputeFixedRotation()
